@@ -1,0 +1,80 @@
+# ==========================================
+# Dependencies
+# ==========================================
+node_modules/
+jspm_packages/
+.pnp
+.pnp.js
+
+# ==========================================
+# Environment Variables & Sensitive Credentials
+# ==========================================
+.env
+.env.production
+.env.development
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+
+# ==========================================
+# Logs & Diagnostic Dumps
+# ==========================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ==========================================
+# Runtime Data & Process Identifiers
+# ==========================================
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ==========================================
+# Test PDFs, Scratch & Reverse-Engineering Dumps
+# ==========================================
+sample_doc.pdf
+test_sample.pdf
+*_signed.pdf
+*_merged.pdf
+*_compressed.pdf
+scratch/
+exported_scripts/
+exported_scripts_merge/
+test_ilovepdf_api.js
+
+# ==========================================
+# Operating System Artifacts
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# IDE & Editor Settings
+# ==========================================
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# ==========================================
+# AI Assistant & IDE Workspace Artifacts
+# ==========================================
+.gemini/
+.agents/

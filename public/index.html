@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Like PDFs | Fast, Free & Beautiful PDF Tools</title>
+    <meta name="description" content="I Like PDFs - The ultimate online PDF toolkit. Merge, compress, split, rotate, convert to JPG, protect and unlock PDFs 100% free with unlimited processing power.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Dancing+Script:wght@600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- PDF.js for Visual Page Rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
+    
+    <!-- PDF-Lib for Client-Side Signing & PDF Annotations -->
+    <script src="pdf-lib.min.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="navbar" id="main-nav">
+        <div class="nav-container">
+            <a href="#" class="brand" id="brand-home" onclick="resetToHome(event)">
+                <div class="brand-logo">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">I Like PDFs</span>
+                    <span class="brand-tag">Free Edition</span>
+                </div>
+            </a>
+
+            <!-- Search Bar -->
+            <div class="nav-search-wrapper">
+                <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="nav-search-input" placeholder="Search any tool (e.g. compress, word, merge)..." oninput="handleSearch(this.value)">
+            </div>
+
+            <nav class="nav-links">
+                <button class="nav-link active" onclick="filterTools('all', this)" id="nav-all">All Tools</button>
+                <button class="nav-link" onclick="filterTools('organize', this)" id="nav-organize">Organize</button>
+                <button class="nav-link" onclick="filterTools('optimize', this)" id="nav-optimize">Optimize</button>
+                <button class="nav-link" onclick="filterTools('convert', this)" id="nav-convert">Convert</button>
+                <button class="nav-link" onclick="filterTools('security', this)" id="nav-security">Security</button>
+            </nav>
+
+            <div class="nav-status">
+                <div class="status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span class="status-text" id="cluster-status-text">Edge Grid Active</span>
+                </div>
+                <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+                    <span id="theme-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-content">
+        <!-- Hero Section (Shown on Home View) -->
+        <section class="hero-section" id="hero-section">
+            <div class="hero-badge">
+                <span class="sparkle-icon">✨</span>
+                <span>Powered by High-Speed Cloud Compute</span>
+            </div>
+            <h1 class="hero-title">Every tool you need to work with PDFs, <span class="highlight-text">100% Free</span></h1>
+            <p class="hero-subtitle">Fast, secure, and privacy-first document manipulation right in your browser. No file caps, no sign-ups, and instant processing.</p>
+        </section>
+
+        <!-- Tools Grid View -->
+        <section class="tools-section" id="tools-section">
+            <div class="tools-grid" id="tools-grid">
+                <!-- Dynamically populated by app.js -->
+            </div>
+        </section>
+
+        <!-- Tool Workspace View (Hidden by default, shown when a tool is selected) -->
+        <section class="workspace-section" id="workspace-section" style="display: none;">
+            <!-- Workspace Header -->
+            <div class="workspace-header">
+                <button class="back-btn" onclick="backToHome()" id="btn-back-home" data-id="back-to-home">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <span>Back to all tools</span>
+                </button>
+                <div class="workspace-tool-info">
+                    <div class="tool-badge-icon" id="ws-tool-icon">🗜️</div>
+                    <div>
+                        <h2 class="workspace-title" id="ws-tool-title">Compress PDF</h2>
+                        <p class="workspace-desc" id="ws-tool-desc">Reduce file size while keeping high quality.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="workspace-layout">
+                <!-- Left: Dropzone, Page Canvas & File List -->
+                <div class="workspace-files-pane">
+                    <!-- Dropzone -->
+                    <div class="dropzone" id="dropzone">
+                        <input type="file" id="file-input" multiple accept=".pdf" class="file-input-hidden">
+                        <div class="dropzone-content">
+                            <div class="upload-icon-circle">
+                                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                            </div>
+                            <h3 class="dropzone-title">Drop your files here</h3>
+                            <p class="dropzone-sub">or <span class="browse-link">browse files</span> from your device</p>
+                            <span class="dropzone-hint" id="ws-file-hint">Select files (Max 50MB each)</span>
+                        </div>
+                    </div>
+
+                    <!-- Selected Files List -->
+                    <div class="files-list-container" id="files-list-container" style="display: none;">
+                        <div class="files-list-header">
+                            <span class="files-count-badge" id="files-count">0 Files Selected</span>
+                            <button class="add-more-btn" onclick="triggerAddMoreFiles()" id="btn-add-more">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                Add More
+                            </button>
+                        </div>
+                        <div class="files-list" id="files-list">
+                            <!-- Items injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Visual Page Thumbnails Canvas (Interactive Page Organizer) -->
+                    <div class="page-canvas-container" id="page-canvas-container" style="display: none;">
+                        <div class="page-canvas-header">
+                            <div class="canvas-header-left">
+                                <span class="canvas-title">Document Pages</span>
+                                <span class="canvas-badge" id="canvas-page-count">0 Pages</span>
+                            </div>
+                            <div class="canvas-actions">
+                                <button type="button" class="canvas-btn" onclick="rotateAllPages(90)" title="Rotate all pages 90° clockwise">
+                                    ↻ Rotate All
+                                </button>
+                                <button type="button" class="canvas-btn secondary" onclick="resetCanvasPages()" title="Reset page order and rotations">
+                                    ↺ Reset
+                                </button>
+                            </div>
+                        </div>
+                        <p class="canvas-hint">Drag pages to reorder. Hover over any page to rotate individual pages or remove them.</p>
+                        <div class="page-thumbnails-grid" id="page-thumbnails-grid">
+                            <!-- Miniature page cards rendered by PDF.js -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Tool Options & Action Pane -->
+                <div class="workspace-options-pane" id="workspace-options-pane">
+                    <div class="options-card">
+                        <h3 class="options-card-title">Processing Options</h3>
+                        
+                        <!-- Dynamic Tool Options Container -->
+                        <div class="tool-options-container" id="tool-options-container">
+                            <!-- Injected dynamically per tool -->
+                        </div>
+
+                        <!-- Process Action Button -->
+                        <div class="process-action-area">
+                            <button class="process-btn" id="btn-start-process" onclick="handleStartProcess()">
+                                <span class="btn-text" id="btn-process-text">Process PDF Now</span>
+                                <svg class="btn-arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signer Studio Layout (Shown when Sign PDF is selected & document is loaded) -->
+            <div class="signer-studio" id="signer-studio" style="display: none;">
+                <!-- Top Toolbar -->
+                <div class="signer-toolbar">
+                    <div class="signer-tools-group">
+                        <button type="button" class="signer-tool-btn" onclick="openSignatureModal()" id="btn-add-sig">
+                            <span>✍️ Add Signature</span>
+                        </button>
+                        <button type="button" class="signer-tool-btn" onclick="addAnnotation('text')" id="btn-add-text">
+                            <span>🔤 Add Text</span>
+                        </button>
+                        <button type="button" class="signer-tool-btn" onclick="addAnnotation('date')" id="btn-add-date">
+                            <span>📅 Insert Date</span>
+                        </button>
+                        <button type="button" class="signer-tool-btn" onclick="addAnnotation('check')" id="btn-add-check">
+                            <span>✔️ Checkmark</span>
+                        </button>
+                    </div>
+
+                    <!-- Page Navigation -->
+                    <div class="signer-pagination">
+                        <button type="button" class="page-nav-btn" onclick="changeSignerPage(-1)" id="btn-prev-page">◀</button>
+                        <span class="signer-page-indicator" id="signer-page-indicator">Page 1 / 1</span>
+                        <button type="button" class="page-nav-btn" onclick="changeSignerPage(1)" id="btn-next-page">▶</button>
+                    </div>
+
+                    <!-- Save Action -->
+                    <div class="signer-actions">
+                        <button type="button" class="signer-save-btn" onclick="saveSignedPdf()">
+                            <span>💾 Sign & Download PDF</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Signer Document Page Viewport -->
+                <div class="signer-viewport" id="signer-viewport">
+                    <div class="signer-page-wrapper" id="signer-page-wrapper">
+                        <canvas id="signer-page-canvas"></canvas>
+                        <!-- Interactive Draggable Overlay Layer -->
+                        <div class="signer-annotation-layer" id="signer-annotation-layer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive In-Browser PDF Reader & Viewer Studio -->
+            <div class="reader-studio" id="reader-studio" style="display: none;">
+                <!-- Reader Top Bar -->
+                <div class="reader-toolbar">
+                    <div class="reader-toolbar-left">
+                        <button type="button" class="reader-tool-btn" id="btn-reader-toggle-sidebar" onclick="toggleReaderSidebar()" title="Toggle Thumbnail Sidebar">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                            <span class="btn-text-sm">Thumbnails</span>
+                        </button>
+                        <div class="reader-doc-meta">
+                            <span class="reader-doc-name" id="reader-doc-name">document.pdf</span>
+                            <span class="reader-doc-badge" id="reader-page-badge">1 / 1</span>
+                        </div>
+                    </div>
+
+                    <!-- Reader Center: Pagination & Zoom Controls -->
+                    <div class="reader-toolbar-center">
+                        <!-- Pagination -->
+                        <div class="reader-btn-group">
+                            <button type="button" class="reader-ctrl-btn" onclick="changeReaderPage(-1)" id="btn-reader-prev" title="Previous Page">◀</button>
+                            <div class="reader-page-input-wrap">
+                                <input type="number" id="reader-page-input" min="1" value="1" onchange="jumpToReaderPage(this.value)">
+                                <span class="reader-total-pages" id="reader-total-pages">/ 1</span>
+                            </div>
+                            <button type="button" class="reader-ctrl-btn" onclick="changeReaderPage(1)" id="btn-reader-next" title="Next Page">▶</button>
+                        </div>
+
+                        <!-- Zoom & Fit Controls -->
+                        <div class="reader-btn-group">
+                            <button type="button" class="reader-ctrl-btn" onclick="zoomReader(-0.2)" title="Zoom Out (Ctrl -)">−</button>
+                            <span class="reader-zoom-level" id="reader-zoom-level" onclick="zoomReader('reset')" title="Reset to 100%">100%</span>
+                            <button type="button" class="reader-ctrl-btn" onclick="zoomReader(0.2)" title="Zoom In (Ctrl +)">+</button>
+                            <button type="button" class="reader-ctrl-btn" onclick="fitReaderToWidth()" title="Fit to Width">↔</button>
+                            <button type="button" class="reader-ctrl-btn" onclick="fitReaderToPage()" title="Fit to Page">↕</button>
+                        </div>
+
+                        <!-- View Rotation -->
+                        <button type="button" class="reader-ctrl-btn" onclick="rotateReaderView()" title="Rotate View Clockwise (90°)">
+                            ↻
+                        </button>
+                    </div>
+
+                    <!-- Reader Actions: Print, Download, Close -->
+                    <div class="reader-toolbar-right">
+                        <button type="button" class="reader-tool-btn" onclick="printReaderDocument()" title="Print PDF">
+                            <span>🖨️ Print</span>
+                        </button>
+                        <a href="#" class="reader-download-btn" id="btn-reader-download" download title="Download PDF">
+                            <span>💾 Download</span>
+                        </a>
+                        <button type="button" class="reader-close-btn" onclick="closePdfReader()" title="Exit Reader">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reader Main View Area with Sidebar -->
+                <div class="reader-main-body">
+                    <!-- Left Thumbnails Sidebar -->
+                    <aside class="reader-sidebar" id="reader-sidebar">
+                        <div class="reader-sidebar-header">
+                            <span>Pages Overview</span>
+                        </div>
+                        <div class="reader-thumbnails-list" id="reader-thumbnails-list">
+                            <!-- Injected dynamically by PDF.js -->
+                        </div>
+                    </aside>
+
+                    <!-- Central PDF Viewport -->
+                    <main class="reader-viewport" id="reader-viewport">
+                        <div class="reader-canvas-wrapper" id="reader-canvas-wrapper">
+                            <canvas id="reader-page-canvas"></canvas>
+                        </div>
+                    </main>
+                </div>
+            </div>
+
+            <!-- Processing Progress Overlay Modal -->
+            <div class="processing-modal" id="processing-modal" style="display: none;">
+                <div class="processing-card">
+                    <div class="spinner-container">
+                        <div class="quantum-spinner"></div>
+                    </div>
+                    <h3 class="processing-title" id="processing-step-title">Uploading & Dispatching...</h3>
+                    <p class="processing-sub" id="processing-step-sub">Connecting to assigned edge processing server</p>
+                    
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" id="progress-bar-fill" style="width: 25%;"></div>
+                    </div>
+                    <div class="progress-percent" id="progress-percent">25%</div>
+                </div>
+            </div>
+
+            <!-- Complete Success Result Card -->
+            <div class="result-modal" id="result-modal" style="display: none;">
+                <div class="result-card">
+                    <div class="success-icon-badge">
+                        <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                    <h2 class="result-title">Task Completed Successfully!</h2>
+                    <p class="result-sub" id="result-filename">your_document_ready.pdf</p>
+
+                    <!-- Stats Bar (e.g. for compression) -->
+                    <div class="result-stats" id="result-stats" style="display: none;">
+                        <div class="stat-item">
+                            <span class="stat-label">Original Size</span>
+                            <span class="stat-value" id="stat-orig-size">--</span>
+                        </div>
+                        <div class="stat-arrow">→</div>
+                        <div class="stat-item">
+                            <span class="stat-label">New Size</span>
+                            <span class="stat-value highlight" id="stat-new-size">--</span>
+                        </div>
+                        <div class="stat-badge" id="stat-savings-badge">Saved 0%</div>
+                    </div>
+
+                    <!-- Download Button -->
+                    <div class="result-actions">
+                        <a href="#" class="download-btn" id="btn-download-result" download>
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <span>Download Processed File</span>
+                        </a>
+                        <button type="button" class="preview-reader-btn" id="btn-preview-in-reader" onclick="previewCurrentResultInReader()">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            <span>Open in PDF Reader</span>
+                        </button>
+                        <button class="another-btn" onclick="resetToolForAnother()">
+                            Process Another File
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trust & Value Proposition Section -->
+        <section class="features-section" id="features-section">
+            <div class="feature-item">
+                <div class="feature-icon">⚡</div>
+                <h4>Lightning Fast</h4>
+                <p>Task queuing and multi-threaded edge workers process files in seconds.</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🛡️</div>
+                <h4>Zero Data Retention</h4>
+                <p>Documents are processed securely and deleted automatically from memory.</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">✨</div>
+                <h4>100% Free & Unlimited</h4>
+                <p>No paywalls, no watermark additions, and no email sign-ups required.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Signature Creation Modal -->
+    <div class="signature-modal" id="signature-modal" style="display: none;">
+        <div class="signature-dialog">
+            <div class="sig-dialog-header">
+                <h3 class="sig-title">Create Signature</h3>
+                <button type="button" class="sig-close-btn" onclick="closeSignatureModal()">&times;</button>
+            </div>
+
+            <!-- Tabs: Draw / Type -->
+            <div class="sig-tabs">
+                <button type="button" class="sig-tab active" id="sig-tab-draw" onclick="switchSigTab('draw')">Draw Signature</button>
+                <button type="button" class="sig-tab" id="sig-tab-type" onclick="switchSigTab('type')">Type Signature</button>
+            </div>
+
+            <!-- Draw Mode Panel -->
+            <div class="sig-panel" id="sig-panel-draw">
+                <div class="sig-canvas-box">
+                    <canvas id="sig-drawing-canvas" width="520" height="190"></canvas>
+                    <button type="button" class="sig-clear-btn" onclick="clearSignatureCanvas()">Clear</button>
+                </div>
+                <div class="sig-options-row">
+                    <div class="ink-colors">
+                        <span class="ink-label">Ink Color:</span>
+                        <button type="button" class="ink-dot active" style="background: #0f172a;" onclick="setInkColor('#0f172a', this)"></button>
+                        <button type="button" class="ink-dot" style="background: #2563eb;" onclick="setInkColor('#2563eb', this)"></button>
+                        <button type="button" class="ink-dot" style="background: #dc2626;" onclick="setInkColor('#dc2626', this)"></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Type Mode Panel -->
+            <div class="sig-panel" id="sig-panel-type" style="display: none;">
+                <input type="text" class="sig-type-input" id="sig-type-input" placeholder="Type your full name..." oninput="updateTypedSignaturePreview(this.value)">
+                <div class="sig-typed-preview" id="sig-typed-preview">Your Signature</div>
+                <div class="sig-font-choices">
+                    <label class="sig-font-opt"><input type="radio" name="sig_font" value="Caveat" checked onchange="setSigFont('Caveat')"> Casual Hand</label>
+                    <label class="sig-font-opt"><input type="radio" name="sig_font" value="'Dancing Script', cursive" onchange="setSigFont('Dancing Script')"> Elegant Calligraphy</label>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="sig-dialog-footer">
+                <button type="button" class="sig-cancel-btn" onclick="closeSignatureModal()">Cancel</button>
+                <button type="button" class="sig-insert-btn" onclick="applySignature()">Insert Signature</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <span class="brand-title">I Like PDFs</span>
+                <p>The modern, responsive suite for document productivity.</p>
+            </div>
+            <div class="footer-links">
+                <span>Fast. Private. Open.</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
