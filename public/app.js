@@ -39,6 +39,13 @@ const state = {
         sidebarOpen: true,
         downloadUrl: null,
         fitMode: null
+    },
+    stamp: {
+        pdfDoc: null,
+        rawBytes: null,
+        pageNum: 1,
+        totalPages: 1,
+        scale: 0.8
     }
 };
 
@@ -182,7 +189,16 @@ const DEFAULT_TOOLS = [
         minFiles: 1,
         maxFiles: 5,
         accept: ".pdf",
-        defaultOptions: { text: "CONFIDENTIAL", vertical_position: "middle", horizontal_position: "center", opacity: "70", font_size: "36" }
+        defaultOptions: { 
+            text: "CONFIDENTIAL", 
+            vertical_position: "middle", 
+            horizontal_position: "center", 
+            opacity: "70", 
+            font_size: "36",
+            rotation: "45",
+            font_color: "#e11d48",
+            mosaic: "0"
+        }
     },
     {
         id: "pagenumber",
@@ -196,7 +212,15 @@ const DEFAULT_TOOLS = [
         minFiles: 1,
         maxFiles: 5,
         accept: ".pdf",
-        defaultOptions: { vertical_position: "bottom", horizontal_position: "right" }
+        defaultOptions: { 
+            vertical_position: "bottom", 
+            horizontal_position: "right",
+            format: "Page {n} of {nb}",
+            starting_number: "1",
+            margin: "normal",
+            font_size: "14",
+            font_color: "#1e293b"
+        }
     },
     {
         id: "repair",
@@ -484,6 +508,8 @@ function selectTool(toolId) {
     if (signerStudio) signerStudio.style.display = "none";
     const readerStudio = document.getElementById("reader-studio");
     if (readerStudio) readerStudio.style.display = "none";
+    const stampContainer = document.getElementById("stamp-preview-container");
+    if (stampContainer) stampContainer.style.display = "none";
     const wsLayout = document.querySelector(".workspace-layout");
     if (wsLayout) wsLayout.style.display = "grid";
     const dropzone = document.getElementById("dropzone");
@@ -500,6 +526,14 @@ function selectTool(toolId) {
         activeTab: 'draw',
         isDrawing: false,
         hasDrawn: false
+    };
+
+    state.stamp = {
+        pdfDoc: null,
+        rawBytes: null,
+        pageNum: 1,
+        totalPages: 1,
+        scale: 0.8
     };
 
     // Render Options
@@ -531,6 +565,8 @@ function backToHome() {
     if (signerStudio) signerStudio.style.display = "none";
     const readerStudio = document.getElementById("reader-studio");
     if (readerStudio) readerStudio.style.display = "none";
+    const stampContainer = document.getElementById("stamp-preview-container");
+    if (stampContainer) stampContainer.style.display = "none";
     const wsLayout = document.querySelector(".workspace-layout");
     if (wsLayout) wsLayout.style.display = "grid";
 
@@ -561,6 +597,8 @@ function resetToolForAnother() {
     if (signerStudio) signerStudio.style.display = "none";
     const readerStudio = document.getElementById("reader-studio");
     if (readerStudio) readerStudio.style.display = "none";
+    const stampContainer = document.getElementById("stamp-preview-container");
+    if (stampContainer) stampContainer.style.display = "none";
     const wsLayout = document.querySelector(".workspace-layout");
     if (wsLayout) wsLayout.style.display = "grid";
     const dropzone = document.getElementById("dropzone");
@@ -723,28 +761,63 @@ function renderToolOptions(tool) {
                 <div class="form-group">
                     <label class="form-label">Watermark Text</label>
                     <input type="text" class="form-input" id="opt-watermark-text" 
-                           value="CONFIDENTIAL" 
-                           oninput="setOption('text', this.value)"
+                           value="${escapeHtml(state.options.text || 'CONFIDENTIAL')}" 
+                           oninput="setWatermarkText(this.value)"
                            placeholder="Enter stamp text">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Position</label>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <select class="form-select" onchange="setOption('vertical_position', this.value)">
-                            <option value="top">Top</option>
-                            <option value="middle" selected>Middle</option>
-                            <option value="bottom">Bottom</option>
-                        </select>
-                        <select class="form-select" onchange="setOption('horizontal_position', this.value)">
-                            <option value="left">Left</option>
-                            <option value="center" selected>Center</option>
-                            <option value="right">Right</option>
-                        </select>
+                    <label class="form-label">Position on Page (3x3 Matrix)</label>
+                    <div class="pos-grid-container">
+                        <div class="pos-grid-3x3" id="watermark-pos-grid">
+                            <button type="button" class="pos-cell ${state.options.vertical_position === 'top' && state.options.horizontal_position === 'left' ? 'active' : ''}" data-v="top" data-h="left" onclick="selectWatermarkPos('top', 'left', this)" title="Top Left"></button>
+                            <button type="button" class="pos-cell ${state.options.vertical_position === 'top' && state.options.horizontal_position === 'center' ? 'active' : ''}" data-v="top" data-h="center" onclick="selectWatermarkPos('top', 'center', this)" title="Top Center"></button>
+                            <button type="button" class="pos-cell ${state.options.vertical_position === 'top' && state.options.horizontal_position === 'right' ? 'active' : ''}" data-v="top" data-h="right" onclick="selectWatermarkPos('top', 'right', this)" title="Top Right"></button>
+                            <button type="button" class="pos-cell ${state.options.vertical_position === 'middle' && state.options.horizontal_position === 'left' ? 'active' : ''}" data-v="middle" data-h="left" onclick="selectWatermarkPos('middle', 'left', this)" title="Middle Left"></button>
+                            <button type="button" class="pos-cell ${(!state.options.vertical_position || state.options.vertical_position === 'middle') && (!state.options.horizontal_position || state.options.horizontal_position === 'center') ? 'active' : ''}" data-v="middle" data-h="center" onclick="selectWatermarkPos('middle', 'center', this)" title="Center"></button>
+                            <button type="button" class="pos-cell ${state.options.vertical_position === 'middle' && state.options.horizontal_position === 'right' ? 'active' : ''}" data-v="middle" data-h="right" onclick="selectWatermarkPos('middle', 'right', this)" title="Middle Right"></button>
+                            <button type="button" class="pos-cell ${state.options.vertical_position === 'bottom' && state.options.horizontal_position === 'left' ? 'active' : ''}" data-v="bottom" data-h="left" onclick="selectWatermarkPos('bottom', 'left', this)" title="Bottom Left"></button>
+                            <button type="button" class="pos-cell ${state.options.vertical_position === 'bottom' && state.options.horizontal_position === 'center' ? 'active' : ''}" data-v="bottom" data-h="center" onclick="selectWatermarkPos('bottom', 'center', this)" title="Bottom Center"></button>
+                            <button type="button" class="pos-cell ${state.options.vertical_position === 'bottom' && state.options.horizontal_position === 'right' ? 'active' : ''}" data-v="bottom" data-h="right" onclick="selectWatermarkPos('bottom', 'right', this)" title="Bottom Right"></button>
+                        </div>
+                        <div class="pos-label-hint" id="pos-display-label">${(state.options.vertical_position || 'middle').toUpperCase()} ${(state.options.horizontal_position || 'center').toUpperCase()}</div>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Opacity</label>
-                    <input type="range" min="10" max="100" value="70" class="form-range" style="width: 100%;" oninput="setOption('opacity', this.value)">
+                    <label class="form-label">Rotation Angle</label>
+                    <div class="rotation-pill-group">
+                        <button type="button" class="rotation-pill ${state.options.rotation === '0' ? 'active' : ''}" onclick="selectWatermarkRotation('0', this)">Horizontal (0°)</button>
+                        <button type="button" class="rotation-pill ${state.options.rotation !== '0' ? 'active' : ''}" onclick="selectWatermarkRotation('45', this)">Diagonal (45°)</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label class="form-label" style="margin-bottom: 0;">Opacity</label>
+                        <span class="form-hint" id="opacity-val-badge" style="font-weight: 700; color: var(--primary);">${state.options.opacity || 70}%</span>
+                    </div>
+                    <input type="range" min="10" max="100" value="${state.options.opacity || 70}" class="form-range" style="width: 100%; margin-top: 6px;" oninput="updateWatermarkOpacity(this.value)">
+                </div>
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label class="form-label" style="margin-bottom: 0;">Font Size</label>
+                        <span class="form-hint" id="fontsize-val-badge" style="font-weight: 700; color: var(--primary);">${state.options.font_size || 36}px</span>
+                    </div>
+                    <input type="range" min="16" max="72" value="${state.options.font_size || 36}" class="form-range" style="width: 100%; margin-top: 6px;" oninput="updateWatermarkFontSize(this.value)">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Stamp Color</label>
+                    <div class="stamp-color-palette">
+                        <button type="button" class="stamp-color-dot ${state.options.font_color === '#e11d48' || !state.options.font_color ? 'active' : ''}" style="background: #e11d48;" onclick="selectWatermarkColor('#e11d48', this)" title="Rose Red"></button>
+                        <button type="button" class="stamp-color-dot ${state.options.font_color === '#1e293b' ? 'active' : ''}" style="background: #1e293b;" onclick="selectWatermarkColor('#1e293b', this)" title="Slate"></button>
+                        <button type="button" class="stamp-color-dot ${state.options.font_color === '#2563eb' ? 'active' : ''}" style="background: #2563eb;" onclick="selectWatermarkColor('#2563eb', this)" title="Royal Blue"></button>
+                        <button type="button" class="stamp-color-dot ${state.options.font_color === '#16a34a' ? 'active' : ''}" style="background: #16a34a;" onclick="selectWatermarkColor('#16a34a', this)" title="Emerald"></button>
+                        <button type="button" class="stamp-color-dot ${state.options.font_color === '#d97706' ? 'active' : ''}" style="background: #d97706;" onclick="selectWatermarkColor('#d97706', this)" title="Amber"></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.88rem; font-weight: 600; color: var(--text-primary);">
+                        <input type="checkbox" id="opt-watermark-mosaic" ${state.options.mosaic === '1' ? 'checked' : ''} onchange="toggleWatermarkMosaic(this.checked)">
+                        <span>Repeat across whole page (Tiled Mosaic)</span>
+                    </label>
                 </div>
             `;
             break;
@@ -752,12 +825,46 @@ function renderToolOptions(tool) {
         case "pagenumber":
             html = `
                 <div class="form-group">
-                    <label class="form-label">Position on Page</label>
-                    <select class="form-select" onchange="setOption('horizontal_position', this.value)">
-                        <option value="right" selected>Bottom Right</option>
-                        <option value="center">Bottom Center</option>
-                        <option value="left">Bottom Left</option>
+                    <label class="form-label">Position on Page (Header / Footer)</label>
+                    <div class="pos-grid-container">
+                        <div class="pos-grid-3x3" id="pagenumber-pos-grid" style="grid-template-rows: 34px 0 34px;">
+                            <button type="button" class="pos-cell ${state.options.vertical_position === 'top' && state.options.horizontal_position === 'left' ? 'active' : ''}" data-v="top" data-h="left" onclick="selectPageNumPos('top', 'left', this)" title="Top Left"></button>
+                            <button type="button" class="pos-cell ${state.options.vertical_position === 'top' && state.options.horizontal_position === 'center' ? 'active' : ''}" data-v="top" data-h="center" onclick="selectPageNumPos('top', 'center', this)" title="Top Center"></button>
+                            <button type="button" class="pos-cell ${state.options.vertical_position === 'top' && state.options.horizontal_position === 'right' ? 'active' : ''}" data-v="top" data-h="right" onclick="selectPageNumPos('top', 'right', this)" title="Top Right"></button>
+                            <div></div><div></div><div></div>
+                            <button type="button" class="pos-cell ${state.options.vertical_position === 'bottom' && state.options.horizontal_position === 'left' ? 'active' : ''}" data-v="bottom" data-h="left" onclick="selectPageNumPos('bottom', 'left', this)" title="Bottom Left"></button>
+                            <button type="button" class="pos-cell ${state.options.vertical_position === 'bottom' && state.options.horizontal_position === 'center' ? 'active' : ''}" data-v="bottom" data-h="center" onclick="selectPageNumPos('bottom', 'center', this)" title="Bottom Center"></button>
+                            <button type="button" class="pos-cell ${(!state.options.vertical_position || state.options.vertical_position === 'bottom') && (!state.options.horizontal_position || state.options.horizontal_position === 'right') ? 'active' : ''}" data-v="bottom" data-h="right" onclick="selectPageNumPos('bottom', 'right', this)" title="Bottom Right"></button>
+                        </div>
+                        <div class="pos-label-hint" id="pagenum-pos-label">${(state.options.vertical_position || 'bottom').toUpperCase()} ${(state.options.horizontal_position || 'right').toUpperCase()}</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Numbering Format</label>
+                    <select class="form-select" onchange="updatePageNumFormat(this.value)">
+                        <option value="Page {n} of {nb}" ${state.options.format === 'Page {n} of {nb}' || !state.options.format ? 'selected' : ''}>Page {n} of {nb} (e.g. Page 1 of 5)</option>
+                        <option value="{n} / {nb}" ${state.options.format === '{n} / {nb}' ? 'selected' : ''}>{n} / {nb} (e.g. 1 / 5)</option>
+                        <option value="{n}" ${state.options.format === '{n}' ? 'selected' : ''}>{n} (e.g. 1)</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Starting Number</label>
+                    <input type="number" min="1" max="9999" value="${state.options.starting_number || 1}" class="form-input" onchange="updatePageNumStart(this.value)">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Margin</label>
+                    <select class="form-select" onchange="updatePageNumMargin(this.value)">
+                        <option value="small" ${state.options.margin === 'small' ? 'selected' : ''}>Small Margin (12px)</option>
+                        <option value="normal" ${state.options.margin === 'normal' || !state.options.margin ? 'selected' : ''}>Normal Margin (22px)</option>
+                        <option value="big" ${state.options.margin === 'big' ? 'selected' : ''}>Big Margin (36px)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label class="form-label" style="margin-bottom: 0;">Font Size</label>
+                        <span class="form-hint" id="pagenum-size-badge" style="font-weight: 700; color: var(--primary);">${state.options.font_size || 14}px</span>
+                    </div>
+                    <input type="range" min="10" max="24" value="${state.options.font_size || 14}" class="form-range" style="width: 100%; margin-top: 6px;" oninput="updatePageNumSize(this.value)">
                 </div>
             `;
             break;
@@ -1020,6 +1127,12 @@ async function handleFilesAdded(incomingFiles) {
         return;
     }
 
+    // If PDF file and tool is 'watermark' or 'pagenumber', launch Real-Time Visual Stamp Preview!
+    if (firstPdf && (tool.id === 'watermark' || tool.id === 'pagenumber')) {
+        await initStampPreview(firstPdf);
+        return;
+    }
+
     // If PDF file and tool benefits from visual canvas (Organize, Merge, Split, Rotate)
     if (firstPdf && (tool.id === 'organize' || tool.id === 'rotate' || tool.id === 'split' || tool.id === 'merge')) {
         await generateVisualPageThumbnails(firstPdf);
@@ -1033,6 +1146,8 @@ function removeFile(index) {
         state.pages = [];
         document.getElementById("page-canvas-container").style.display = "none";
         document.getElementById("page-thumbnails-grid").innerHTML = "";
+        const stampContainer = document.getElementById("stamp-preview-container");
+        if (stampContainer) stampContainer.style.display = "none";
     }
     updateProcessButtonState();
 }
@@ -2071,7 +2186,18 @@ async function initPdfReader(rawBytes, filename, downloadUrl) {
         state.reader.fitMode = null;
 
         const clonedBytes = rawBytes.slice(0);
-        state.reader.pdfDoc = await pdfjsLib.getDocument({ data: clonedBytes }).promise;
+        const loadingTask = pdfjsLib.getDocument({
+            data: clonedBytes,
+            onPassword: (callback, reason) => {
+                const userPassword = prompt(reason === 2 ? "Incorrect password. Please enter the document password:" : "This document is password-protected. Enter password to view:");
+                if (userPassword) {
+                    callback(userPassword);
+                } else {
+                    callback(new Error("Password cancelled"));
+                }
+            }
+        });
+        state.reader.pdfDoc = await loadingTask.promise;
         state.reader.totalPages = state.reader.pdfDoc.numPages;
 
         // Hide Workspace layout & Result Modal, Show Reader Studio
@@ -2346,3 +2472,266 @@ async function previewCurrentResultInReader() {
         showToast("Could not preview document: " + err.message, "error");
     }
 }
+
+// -------------------------------------------------------------
+// Real-Time Stamp & Watermark Visual Preview Logic
+// -------------------------------------------------------------
+async function initStampPreview(file) {
+    const container = document.getElementById("stamp-preview-container");
+    if (!container) return;
+
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        state.stamp.rawBytes = arrayBuffer.slice(0);
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+        state.stamp.pdfDoc = await loadingTask.promise;
+        state.stamp.totalPages = state.stamp.pdfDoc.numPages;
+        state.stamp.pageNum = 1;
+
+        // Hide dropzone and page canvas, show files list container & stamp preview container
+        const dropzone = document.getElementById("dropzone");
+        if (dropzone) dropzone.style.display = "none";
+        document.getElementById("files-list-container").style.display = "block";
+        document.getElementById("page-canvas-container").style.display = "none";
+        container.style.display = "block";
+
+        await renderStampPreviewPage();
+    } catch (err) {
+        console.error("Failed to load PDF for stamp preview:", err);
+        showToast("Could not render PDF preview on canvas", "error");
+    }
+}
+
+async function renderStampPreviewPage() {
+    if (!state.stamp.pdfDoc) return;
+    const canvas = document.getElementById("stamp-page-canvas");
+    if (!canvas) return;
+
+    const page = await state.stamp.pdfDoc.getPage(state.stamp.pageNum);
+    
+    // Calculate scale to fit comfortably in viewport (e.g. width ~ 450px)
+    const viewportContainer = document.querySelector(".stamp-preview-viewport");
+    const targetWidth = Math.min(480, (viewportContainer && viewportContainer.clientWidth ? viewportContainer.clientWidth - 48 : 450));
+    const unscaledViewport = page.getViewport({ scale: 1.0 });
+    const scale = targetWidth / unscaledViewport.width;
+    state.stamp.scale = scale;
+
+    const viewport = page.getViewport({ scale });
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    const ctx = canvas.getContext("2d");
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    // Update page indicator badge
+    const badge = document.getElementById("stamp-page-badge");
+    if (badge) {
+        badge.textContent = `Page ${state.stamp.pageNum} of ${state.stamp.totalPages}`;
+    }
+
+    // Refresh overlay layer
+    updateLiveStampOverlay();
+}
+
+function changeStampPreviewPage(delta) {
+    if (!state.stamp.pdfDoc) return;
+    const newPage = state.stamp.pageNum + delta;
+    if (newPage < 1 || newPage > state.stamp.totalPages) return;
+    state.stamp.pageNum = newPage;
+    renderStampPreviewPage();
+}
+
+function updateLiveStampOverlay() {
+    const overlay = document.getElementById("stamp-watermark-overlay");
+    if (!overlay) return;
+
+    const tool = state.selectedTool;
+    if (!tool) return;
+
+    if (tool.id === "watermark") {
+        const text = state.options.text || "CONFIDENTIAL";
+        const opacity = (parseInt(state.options.opacity || "70") / 100);
+        const rotation = state.options.rotation === "0" ? 0 : -45;
+        const color = state.options.font_color || "#e11d48";
+        const baseSize = parseInt(state.options.font_size || "36");
+        const scaledSize = Math.max(12, Math.round(baseSize * (state.stamp.scale || 0.8)));
+        const vPos = state.options.vertical_position || "middle";
+        const hPos = state.options.horizontal_position || "center";
+        const isMosaic = state.options.mosaic === "1";
+
+        if (isMosaic) {
+            overlay.className = "stamp-watermark-overlay mosaic-mode";
+            overlay.style.cssText = "";
+            let mosaicHtml = "";
+            for (let i = 0; i < 12; i++) {
+                mosaicHtml += `<span class="mosaic-item" style="color: ${color}; opacity: ${opacity}; font-size: ${Math.max(10, Math.round(scaledSize * 0.65))}px;">${escapeHtml(text)}</span>`;
+            }
+            overlay.innerHTML = mosaicHtml;
+            return;
+        }
+
+        overlay.className = "stamp-watermark-overlay";
+        overlay.innerHTML = escapeHtml(text);
+
+        // Position styles
+        let top = "50%";
+        let left = "50%";
+        let transX = "-50%";
+        let transY = "-50%";
+
+        overlay.style.bottom = "auto";
+        overlay.style.right = "auto";
+
+        if (vPos === "top") {
+            top = "24px";
+            transY = "0";
+        } else if (vPos === "bottom") {
+            top = "auto";
+            transY = "0";
+            overlay.style.bottom = "24px";
+        }
+
+        if (hPos === "left") {
+            left = "24px";
+            transX = "0";
+        } else if (hPos === "right") {
+            left = "auto";
+            transX = "0";
+            overlay.style.right = "24px";
+        }
+
+        overlay.style.top = top;
+        if (hPos !== "right") overlay.style.left = left;
+        overlay.style.transform = `translate(${transX}, ${transY}) rotate(${rotation}deg)`;
+        overlay.style.color = color;
+        overlay.style.opacity = opacity;
+        overlay.style.fontSize = `${scaledSize}px`;
+
+    } else if (tool.id === "pagenumber") {
+        overlay.className = "stamp-pagenumber-overlay";
+        const fmt = state.options.format || "Page {n} of {nb}";
+        const startNum = parseInt(state.options.starting_number || "1");
+        const currentP = (state.stamp.pageNum - 1) + startNum;
+        const totalP = (state.stamp.totalPages - 1) + startNum;
+        const text = fmt.replace("{n}", currentP).replace("{nb}", totalP);
+        overlay.innerHTML = escapeHtml(text);
+
+        const vPos = state.options.vertical_position || "bottom";
+        const hPos = state.options.horizontal_position || "right";
+        const marginMap = { small: "12px", normal: "22px", big: "36px" };
+        const m = marginMap[state.options.margin || "normal"] || "22px";
+        const baseSize = parseInt(state.options.font_size || "14");
+        const scaledSize = Math.max(10, Math.round(baseSize * (state.stamp.scale || 0.8)));
+
+        let top = "auto";
+        let bottom = "auto";
+        let left = "auto";
+        let right = "auto";
+        let transX = "0";
+        let transY = "0";
+
+        if (vPos === "top") top = m;
+        else bottom = m;
+
+        if (hPos === "left") left = m;
+        else if (hPos === "right") right = m;
+        else {
+            left = "50%";
+            transX = "-50%";
+        }
+
+        overlay.style.top = top;
+        overlay.style.bottom = bottom;
+        overlay.style.left = left;
+        overlay.style.right = right;
+        overlay.style.transform = `translate(${transX}, ${transY})`;
+        overlay.style.fontSize = `${scaledSize}px`;
+        overlay.style.color = state.options.font_color || "#1e293b";
+        overlay.style.opacity = "0.9";
+    }
+}
+
+function setWatermarkText(val) {
+    state.options.text = val;
+    updateLiveStampOverlay();
+}
+
+function selectWatermarkPos(v, h, btn) {
+    state.options.vertical_position = v;
+    state.options.horizontal_position = h;
+    document.querySelectorAll("#watermark-pos-grid .pos-cell").forEach(c => c.classList.remove("active"));
+    if (btn) btn.classList.add("active");
+    const label = document.getElementById("pos-display-label");
+    if (label) {
+        label.textContent = `${v.toUpperCase()} ${h.toUpperCase()}`;
+    }
+    updateLiveStampOverlay();
+}
+
+function selectWatermarkRotation(deg, btn) {
+    state.options.rotation = deg;
+    document.querySelectorAll(".rotation-pill").forEach(p => p.classList.remove("active"));
+    if (btn) btn.classList.add("active");
+    updateLiveStampOverlay();
+}
+
+function updateWatermarkOpacity(val) {
+    state.options.opacity = val;
+    const badge = document.getElementById("opacity-val-badge");
+    if (badge) badge.textContent = `${val}%`;
+    updateLiveStampOverlay();
+}
+
+function updateWatermarkFontSize(val) {
+    state.options.font_size = val;
+    const badge = document.getElementById("fontsize-val-badge");
+    if (badge) badge.textContent = `${val}px`;
+    updateLiveStampOverlay();
+}
+
+function selectWatermarkColor(color, btn) {
+    state.options.font_color = color;
+    document.querySelectorAll(".stamp-color-dot").forEach(d => d.classList.remove("active"));
+    if (btn) btn.classList.add("active");
+    updateLiveStampOverlay();
+}
+
+function toggleWatermarkMosaic(isChecked) {
+    state.options.mosaic = isChecked ? "1" : "0";
+    updateLiveStampOverlay();
+}
+
+function selectPageNumPos(v, h, btn) {
+    state.options.vertical_position = v;
+    state.options.horizontal_position = h;
+    document.querySelectorAll("#pagenumber-pos-grid .pos-cell").forEach(c => c.classList.remove("active"));
+    if (btn) btn.classList.add("active");
+    const label = document.getElementById("pagenum-pos-label");
+    if (label) {
+        label.textContent = `${v.toUpperCase()} ${h.toUpperCase()}`;
+    }
+    updateLiveStampOverlay();
+}
+
+function updatePageNumFormat(fmt) {
+    state.options.format = fmt;
+    updateLiveStampOverlay();
+}
+
+function updatePageNumStart(num) {
+    state.options.starting_number = num;
+    updateLiveStampOverlay();
+}
+
+function updatePageNumMargin(margin) {
+    state.options.margin = margin;
+    updateLiveStampOverlay();
+}
+
+function updatePageNumSize(size) {
+    state.options.font_size = size;
+    const badge = document.getElementById("pagenum-size-badge");
+    if (badge) badge.textContent = `${size}px`;
+    updateLiveStampOverlay();
+}
+

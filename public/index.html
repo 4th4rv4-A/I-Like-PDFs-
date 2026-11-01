@@ -161,6 +161,28 @@
                             <!-- Miniature page cards rendered by PDF.js -->
                         </div>
                     </div>
+
+                    <!-- Real-Time Stamp & Watermark Visual Canvas -->
+                    <div class="stamp-preview-container" id="stamp-preview-container" style="display: none;">
+                        <div class="stamp-preview-header">
+                            <div class="stamp-header-left">
+                                <span class="stamp-header-title">Live Real-Time Document Canvas</span>
+                                <span class="stamp-header-badge" id="stamp-page-badge">Page 1 of 1</span>
+                            </div>
+                            <div class="stamp-header-nav">
+                                <button type="button" class="stamp-nav-btn" onclick="changeStampPreviewPage(-1)" title="Previous Page">◀</button>
+                                <button type="button" class="stamp-nav-btn" onclick="changeStampPreviewPage(1)" title="Next Page">▶</button>
+                            </div>
+                        </div>
+                        <div class="stamp-preview-viewport">
+                            <div class="stamp-page-wrapper" id="stamp-page-wrapper">
+                                <canvas id="stamp-page-canvas"></canvas>
+                                <div class="stamp-overlay-layer" id="stamp-overlay-layer">
+                                    <div class="stamp-watermark-overlay" id="stamp-watermark-overlay"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Right: Tool Options & Action Pane -->

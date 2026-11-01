@@ -216,16 +216,42 @@ class ILovePdfService {
             formData.append("font_size", String(options.font_size || "36"));
             formData.append("opacity", String(options.opacity || "70"));
             if (options.font_color) formData.append("font_color", options.font_color);
+            if (options.rotation !== undefined) formData.append("rotation", String(options.rotation));
+            if (options.mosaic) formData.append("mosaic", String(options.mosaic));
         } else if (tool === "pagenumber") {
             formData.append("facing_pages", "0");
             formData.append("pages", options.pages || "all");
             formData.append("vertical_position", options.vertical_position || "bottom");
             formData.append("horizontal_position", options.horizontal_position || "right");
+            if (options.format) formData.append("format", options.format);
+            if (options.starting_number) formData.append("starting_number", String(options.starting_number));
+            if (options.margin) formData.append("margin", options.margin);
+            if (options.font_size) formData.append("font_size", String(options.font_size));
+            if (options.font_color) formData.append("font_color", options.font_color);
         } else if (tool === "pdfocr") {
             formData.append("ocr_language", options.ocr_language || "eng");
         } else if (tool === "pdfa") {
             formData.append("conformance", options.conformance || "pdfa-2b");
+        } else if (tool === "pdfoffice") {
+            formData.append("convert_to", options.convert_to || "docx");
+        } else if (tool === "officepdf") {
+            // officepdf accepts word, excel, powerpoint and converts to pdf
         } else if (tool === "organize") {
+            const filesMap = {};
+            uploadedFiles.forEach((file, idx) => {
+                filesMap[`file_${idx}`] = file.server_filename;
+            });
+            formData.append("files_organize", options.files_organize || JSON.stringify(filesMap));
+
+            let seq = "";
+            if (options.reorder) {
+                seq = options.reorder.split(",").map(p => `file_0:${p.trim()}#0`).join(",");
+            } else if (options.organize_options || options.options) {
+                seq = options.organize_options || options.options;
+            } else {
+                seq = Object.keys(filesMap).map(k => `${k}:1-end#0`).join(",");
+            }
+            formData.append("options", seq);
             if (options.remove_pages) formData.append("remove_pages", options.remove_pages);
             if (options.reorder) formData.append("reorder", options.reorder);
         }
