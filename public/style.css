@@ -770,6 +770,7 @@ body {
 }
 
 .processing-card, .result-card {
+    position: relative;
     background: var(--bg-surface);
     border-radius: var(--radius-lg);
     padding: 40px 32px;
@@ -778,6 +779,31 @@ body {
     text-align: center;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.result-modal-close-corner {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    font-size: 1.35rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.result-modal-close-corner:hover {
+    background: var(--border-light);
+    color: var(--text-primary);
+    transform: scale(1.08);
 }
 
 @keyframes modalPop {

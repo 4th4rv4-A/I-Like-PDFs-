@@ -10,6 +10,7 @@ const ilovepdfService = require("./ilovepdfService");
 const shareManager = require("./shareManager");
 const shareRoutes = require("./routes/shareRoutes");
 const shareConfig = require("./share/shareConfig");
+const ShareValidator = require("./share/shareValidator");
 
 const app = express();
 const port = shareConfig.port;
@@ -525,8 +526,8 @@ app.post("/api/process", upload.array("files", 25), async (req, res) => {
     }
 });
 
-// Download endpoint
-app.get("/api/download/:downloadId/:filename", (req, res) => {
+// Download endpoint (supports with and without filename for maximum client compatibility)
+app.get(["/api/download/:downloadId", "/api/download/:downloadId/:filename"], (req, res) => {
     const { downloadId, filename } = req.params;
     const item = downloadCache.get(downloadId);
 
@@ -534,10 +535,28 @@ app.get("/api/download/:downloadId/:filename", (req, res) => {
         return res.status(404).send("Download link expired or not found. Please re-process your document.");
     }
 
-    res.setHeader("Content-Disposition", `attachment; filename="${item.filename || filename}"`);
-    res.setHeader("Content-Type", item.contentType);
+    const downloadFilename = item.filename || filename || "document.pdf";
+    res.setHeader("Content-Disposition", ShareValidator.buildContentDisposition(downloadFilename, "attachment"));
+    res.setHeader("Content-Type", item.contentType || "application/octet-stream");
     res.setHeader("Content-Length", item.buffer.length);
+    res.setHeader("X-Content-Type-Options", "nosniff");
     res.send(item.buffer);
+});
+
+// Centralized error handler for Multer file upload limits and unexpected server exceptions
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        console.warn("[Multer Error]", err.code, err.message);
+        const status = err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+        const msg = err.code === "LIMIT_FILE_SIZE"
+            ? "File size exceeds the 50MB limit."
+            : (err.code === "LIMIT_UNEXPECTED_FILE"
+                ? "Too many files uploaded for this operation."
+                : `Upload error: ${err.message}`);
+        return res.status(status).json({ success: false, error: msg });
+    }
+    console.error("[Unhandled Server Error]", err);
+    res.status(500).json({ success: false, error: err.message || "Internal server error" });
 });
 
 app.listen(port, host, () => {

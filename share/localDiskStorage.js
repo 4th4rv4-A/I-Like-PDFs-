@@ -134,8 +134,8 @@ class LocalDiskStorage extends ShareStorage {
             fs.writeFileSync(docPath, buffer);
             fs.writeFileSync(metaPath, JSON.stringify(metadata, null, 2), 'utf-8');
 
-            // Atomic rename into main storage
-            fs.renameSync(tempDir, targetDir);
+            // Atomic rename into main storage (with Windows EPERM/EBUSY fallback)
+            this._safeMoveDirectory(tempDir, targetDir);
 
             this.allocatedBytes += buffer.length;
             return {
@@ -149,6 +149,29 @@ class LocalDiskStorage extends ShareStorage {
                     fs.rmSync(tempDir, { recursive: true, force: true });
                 }
             } catch (_) {}
+            throw err;
+        }
+    }
+
+    _safeMoveDirectory(sourceDir, destDir) {
+        if (fs.existsSync(destDir)) {
+            try { fs.rmSync(destDir, { recursive: true, force: true }); } catch (_) {}
+        }
+
+        try {
+            fs.renameSync(sourceDir, destDir);
+        } catch (err) {
+            if (err.code === 'EPERM' || err.code === 'EBUSY' || err.code === 'EXDEV' || err.code === 'EACCES') {
+                fs.mkdirSync(destDir, { recursive: true });
+                const entries = fs.readdirSync(sourceDir);
+                for (const item of entries) {
+                    const src = path.join(sourceDir, item);
+                    const dst = path.join(destDir, item);
+                    fs.copyFileSync(src, dst);
+                }
+                try { fs.rmSync(sourceDir, { recursive: true, force: true }); } catch (_) {}
+                return;
+            }
             throw err;
         }
     }

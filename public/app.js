@@ -1450,7 +1450,13 @@ async function handleStartProcess() {
             body: formData
         });
 
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (parseErr) {
+            const rawText = await response.text().catch(() => "");
+            throw new Error(rawText || `Server returned error (${response.status})`);
+        }
 
         if (!response.ok || !data.success) {
             throw new Error(data.error || "Failed to process document on cluster");
@@ -1744,36 +1750,56 @@ async function renderSignerPage(pageNum) {
     if (prevBtn) prevBtn.disabled = pageNum <= 1;
     if (nextBtn) nextBtn.disabled = pageNum >= state.signer.totalPages;
 
-    const page = await state.signer.pdfDoc.getPage(pageNum);
-    const unscaledViewport = page.getViewport({ scale: 1.0 });
+    // Cancel any active render on this canvas to prevent PDF.js collisions
+    if (state.signer.activeRenderTask) {
+        try { state.signer.activeRenderTask.cancel(); } catch (e) {}
+        state.signer.activeRenderTask = null;
+    }
 
-    // Target viewport width (max 760px for clean editing)
-    const targetWidth = Math.min(760, (window.innerWidth - 80));
-    const scale = targetWidth / unscaledViewport.width;
-    const viewport = page.getViewport({ scale });
+    try {
+        const page = await state.signer.pdfDoc.getPage(pageNum);
+        const unscaledViewport = page.getViewport({ scale: 1.0 });
 
-    const canvas = document.getElementById("signer-page-canvas");
-    const wrapper = document.getElementById("signer-page-wrapper");
-    const layer = document.getElementById("signer-annotation-layer");
+        // Target viewport width (max 760px for clean editing)
+        const targetWidth = Math.min(760, (window.innerWidth - 80));
+        const scale = targetWidth / unscaledViewport.width;
+        const viewport = page.getViewport({ scale });
 
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    canvas.style.width = `${viewport.width}px`;
-    canvas.style.height = `${viewport.height}px`;
+        const canvas = document.getElementById("signer-page-canvas");
+        const wrapper = document.getElementById("signer-page-wrapper");
+        const layer = document.getElementById("signer-annotation-layer");
+        if (!canvas || !wrapper || !layer) return;
 
-    wrapper.style.width = `${viewport.width}px`;
-    wrapper.style.height = `${viewport.height}px`;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(viewport.width * dpr);
+        canvas.height = Math.floor(viewport.height * dpr);
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
 
-    layer.style.width = `${viewport.width}px`;
-    layer.style.height = `${viewport.height}px`;
+        wrapper.style.width = `${Math.floor(viewport.width)}px`;
+        wrapper.style.height = `${Math.floor(viewport.height)}px`;
 
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+        layer.style.width = `${Math.floor(viewport.width)}px`;
+        layer.style.height = `${Math.floor(viewport.height)}px`;
 
-    await page.render({
-        canvasContext: ctx,
-        viewport: viewport
-    }).promise;
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, viewport.width, viewport.height);
+
+        const renderTask = page.render({
+            canvasContext: ctx,
+            viewport: viewport
+        });
+        state.signer.activeRenderTask = renderTask;
+        await renderTask.promise;
+    } catch (err) {
+        if (err && err.name === "RenderingCancelledException") {
+            return;
+        }
+        console.error("renderSignerPage error:", err);
+    } finally {
+        state.signer.activeRenderTask = null;
+    }
 
     renderAnnotationsLayer();
 }
@@ -1859,9 +1885,9 @@ function makeDraggable(el, ann) {
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
 
-        const canvas = document.getElementById("signer-page-canvas");
-        const maxX = canvas ? canvas.width - (ann.width || 60) : 700;
-        const maxY = canvas ? canvas.height - (ann.height || 30) : 900;
+        const layer = document.getElementById("signer-annotation-layer");
+        const maxX = layer ? layer.clientWidth - (ann.width || 60) : 700;
+        const maxY = layer ? layer.clientHeight - (ann.height || 30) : 900;
 
         ann.x = Math.max(0, Math.min(maxX, initialLeft + dx));
         ann.y = Math.max(0, Math.min(maxY, initialTop + dy));
@@ -1899,9 +1925,9 @@ function makeDraggable(el, ann) {
         const dx = touch.clientX - startX;
         const dy = touch.clientY - startY;
 
-        const canvas = document.getElementById("signer-page-canvas");
-        const maxX = canvas ? canvas.width - (ann.width || 60) : 700;
-        const maxY = canvas ? canvas.height - (ann.height || 30) : 900;
+        const layer = document.getElementById("signer-annotation-layer");
+        const maxX = layer ? layer.clientWidth - (ann.width || 60) : 700;
+        const maxY = layer ? layer.clientHeight - (ann.height || 30) : 900;
 
         ann.x = Math.max(0, Math.min(maxX, initialLeft + dx));
         ann.y = Math.max(0, Math.min(maxY, initialTop + dy));
@@ -2061,7 +2087,7 @@ function setSigFont(font) {
     }
 }
 
-function applySignature() {
+async function applySignature() {
     let dataUrl = null;
 
     if (state.signer.activeTab === 'draw') {
@@ -2082,8 +2108,13 @@ function applySignature() {
         const ctx = offscreen.getContext("2d");
 
         const fontFamily = state.signer.currentSigFont === 'Caveat' ? "'Caveat', cursive" : "'Dancing Script', cursive";
+        if (document.fonts && document.fonts.load) {
+            try {
+                await document.fonts.load(`64px ${fontFamily}`);
+            } catch (e) {}
+        }
         ctx.font = `64px ${fontFamily}`;
-        ctx.fillStyle = state.signer.currentInkColor;
+        ctx.fillStyle = state.signer.currentInkColor || "#0f172a";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(name, offscreen.width / 2, offscreen.height / 2);
@@ -2507,6 +2538,12 @@ async function initPdfReader(rawBytes, filename, downloadUrl) {
 async function renderReaderCurrentPage() {
     if (!state.reader.pdfDoc) return;
 
+    // Cancel any ongoing render task on Reader canvas
+    if (state.reader.activeRenderTask) {
+        try { state.reader.activeRenderTask.cancel(); } catch (e) {}
+        state.reader.activeRenderTask = null;
+    }
+
     try {
         const page = await state.reader.pdfDoc.getPage(state.reader.pageNum);
         const rotation = (page.rotate + state.reader.rotation) % 360;
@@ -2544,10 +2581,12 @@ async function renderReaderCurrentPage() {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, viewport.width, viewport.height);
 
-        await page.render({
+        const renderTask = page.render({
             canvasContext: ctx,
             viewport: viewport
-        }).promise;
+        });
+        state.reader.activeRenderTask = renderTask;
+        await renderTask.promise;
 
         // Update toolbar indicators
         const badgeEl = document.getElementById("reader-page-badge");
@@ -2576,7 +2615,12 @@ async function renderReaderCurrentPage() {
         });
 
     } catch (err) {
+        if (err && err.name === "RenderingCancelledException") {
+            return;
+        }
         console.error("renderReaderCurrentPage error:", err);
+    } finally {
+        state.reader.activeRenderTask = null;
     }
 }
 
@@ -2702,6 +2746,12 @@ function printReaderDocument() {
 }
 
 function closePdfReader() {
+    if (state.reader.downloadUrl && state.reader.downloadUrl.startsWith("blob:")) {
+        try { URL.revokeObjectURL(state.reader.downloadUrl); } catch (e) {}
+    }
+    state.reader.pdfDoc = null;
+    state.reader.rawBytes = null;
+
     const readerStudio = document.getElementById("reader-studio");
     if (readerStudio) readerStudio.style.display = "none";
 
@@ -2996,4 +3046,81 @@ function updatePageNumSize(size) {
     if (badge) badge.textContent = `${size}px`;
     updateLiveStampOverlay();
 }
+
+// -------------------------------------------------------------
+// Global Keyboard Navigation & Backdrop Dismissal
+// -------------------------------------------------------------
+document.addEventListener("keydown", (e) => {
+    // Ignore global shortcuts if currently typing in an input, textarea, or contentEditable
+    if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable)) {
+        if (e.key === "Escape") {
+            e.target.blur();
+        }
+        return;
+    }
+
+    // Escape closes modals in order of precedence
+    if (e.key === "Escape") {
+        const sigModal = document.getElementById("signature-modal");
+        const shareModal = document.getElementById("share-progress-modal");
+        const resModal = document.getElementById("result-modal");
+        const readerStudio = document.getElementById("reader-studio");
+
+        if (sigModal && sigModal.style.display === "flex") {
+            closeSignatureModal();
+            return;
+        }
+        if (shareModal && shareModal.style.display === "flex") {
+            cancelShareUpload();
+            return;
+        }
+        if (resModal && resModal.style.display === "flex") {
+            resetToolForAnother();
+            return;
+        }
+        if (readerStudio && readerStudio.style.display === "flex") {
+            closePdfReader();
+            return;
+        }
+    }
+
+    // PDF Reader shortcuts when active
+    const readerStudio = document.getElementById("reader-studio");
+    if (readerStudio && readerStudio.style.display === "flex") {
+        if (e.key === "ArrowLeft" || e.key === "PageUp" || e.key === "k") {
+            e.preventDefault();
+            changeReaderPage(-1);
+        } else if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === "j") {
+            e.preventDefault();
+            changeReaderPage(1);
+        } else if (e.key === "+" || e.key === "=") {
+            e.preventDefault();
+            zoomReader(0.15);
+        } else if (e.key === "-") {
+            e.preventDefault();
+            zoomReader(-0.15);
+        } else if (e.key === "0") {
+            e.preventDefault();
+            state.reader.scale = 1.0;
+            state.reader.fitMode = null;
+            renderReaderCurrentPage();
+        } else if (e.key.toLowerCase() === "f") {
+            e.preventDefault();
+            fitReaderPage(state.reader.fitMode === "width" ? "page" : "width");
+        }
+    }
+});
+
+// Close modals when clicking on their dimmed backdrop
+window.addEventListener("click", (e) => {
+    const sigModal = document.getElementById("signature-modal");
+    if (sigModal && e.target === sigModal) {
+        closeSignatureModal();
+    }
+    const resModal = document.getElementById("result-modal");
+    if (resModal && e.target === resModal) {
+        resetToolForAnother();
+    }
+});
+
 
