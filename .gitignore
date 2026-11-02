@@ -36,6 +36,7 @@ pids/
 *.pid
 *.seed
 *.pid.lock
+storage/
 
 # ==========================================
 # Test PDFs, Scratch & Reverse-Engineering Dumps

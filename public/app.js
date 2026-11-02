@@ -584,6 +584,14 @@ function resetToHome(event) {
 }
 
 function resetToolForAnother() {
+    if (window._qrCountdownInterval) {
+        clearInterval(window._qrCountdownInterval);
+        window._qrCountdownInterval = null;
+    }
+    if (window._previousResultBlobUrl) {
+        try { URL.revokeObjectURL(window._previousResultBlobUrl); } catch (e) {}
+        window._previousResultBlobUrl = null;
+    }
     document.getElementById("result-modal").style.display = "none";
     state.files = [];
     state.pages = [];
@@ -1500,6 +1508,12 @@ function showResultModal(data) {
 
     if (!modal) return;
 
+    // Clear any previous countdown interval to prevent racing timers
+    if (window._qrCountdownInterval) {
+        clearInterval(window._qrCountdownInterval);
+        window._qrCountdownInterval = null;
+    }
+
     if (filenameEl) filenameEl.textContent = data.filename;
 
     if (downloadBtn) {
@@ -1530,7 +1544,110 @@ function showResultModal(data) {
         }
     }
 
+    // Scan-to-Mobile QR Code Integration
+    const qrSection = document.getElementById("qr-share-section");
+    const qrCardActive = document.getElementById("qr-card-body-active");
+    const qrTimerPill = document.getElementById("qr-timer-pill");
+    const qrCountdownText = document.getElementById("qr-countdown-text");
+    const qrCodeImg = document.getElementById("qr-code-img");
+    const qrMobileUrlInput = document.getElementById("qr-mobile-url-input");
+    const qrNetworkIcon = document.getElementById("qr-network-icon");
+    const qrNetworkText = document.getElementById("qr-network-text");
+    const qrUnavailableNotice = document.getElementById("qr-unavailable-notice");
+    const qrUnavailableMsg = document.getElementById("qr-unavailable-msg");
+
+    if (qrSection) {
+        if (data.mobile && data.mobile.available) {
+            if (qrCardActive) {
+                qrCardActive.style.display = "flex";
+                qrCardActive.style.opacity = "1";
+            }
+            if (qrTimerPill) qrTimerPill.style.display = "inline-flex";
+            if (qrUnavailableNotice) qrUnavailableNotice.style.display = "none";
+
+            if (qrCodeImg) qrCodeImg.src = data.mobile.qrCode || "";
+            if (qrMobileUrlInput) qrMobileUrlInput.value = data.mobile.pageUrl || "";
+
+            if (qrNetworkIcon && qrNetworkText) {
+                if (data.mobile.isHttps) {
+                    qrNetworkIcon.textContent = "🔒";
+                    qrNetworkText.textContent = "HTTPS Encrypted Transfer";
+                } else {
+                    qrNetworkIcon.textContent = "📶";
+                    qrNetworkText.textContent = "Local Wi-Fi Transfer";
+                }
+            }
+
+            const expiresAtMs = data.mobile.expiresAt ? new Date(data.mobile.expiresAt).getTime() : Date.now() + 30 * 60 * 1000;
+            const updateTimer = () => {
+                const diffSec = Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000));
+                const mins = Math.floor(diffSec / 60);
+                const secs = diffSec % 60;
+                if (qrCountdownText) {
+                    qrCountdownText.textContent = `Expires in ${mins}:${secs.toString().padStart(2, "0")}`;
+                }
+                if (diffSec <= 0) {
+                    if (window._qrCountdownInterval) {
+                        clearInterval(window._qrCountdownInterval);
+                        window._qrCountdownInterval = null;
+                    }
+                    if (qrCountdownText) qrCountdownText.textContent = "Expired";
+                    if (qrCardActive) qrCardActive.style.opacity = "0.45";
+                }
+            };
+            updateTimer();
+            window._qrCountdownInterval = setInterval(updateTimer, 1000);
+        } else {
+            if (qrCardActive) qrCardActive.style.display = "none";
+            if (qrTimerPill) qrTimerPill.style.display = "none";
+            if (qrUnavailableNotice) {
+                qrUnavailableNotice.style.display = "block";
+                if (qrUnavailableMsg && data.mobile && data.mobile.message) {
+                    qrUnavailableMsg.textContent = data.mobile.message;
+                }
+            }
+        }
+    }
+
     modal.style.display = "flex";
+}
+
+async function copyMobileDownloadUrl() {
+    const input = document.getElementById("qr-mobile-url-input");
+    const btn = document.getElementById("btn-copy-qr-link");
+    if (!input || !input.value) return;
+
+    try {
+        await navigator.clipboard.writeText(input.value);
+        if (btn) {
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `<span style="font-size: 0.82rem; font-weight: 600;">Copied! ✅</span>`;
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+            }, 2000);
+        }
+        showToast("Mobile link copied to clipboard!", "success");
+    } catch (err) {
+        input.select();
+        document.execCommand("copy");
+        showToast("Link copied to clipboard!", "info");
+    }
+}
+
+function downloadQrCodeImage() {
+    const qrImg = document.getElementById("qr-code-img");
+    if (!qrImg || !qrImg.src) {
+        showToast("QR code image is not available yet.", "error");
+        return;
+    }
+
+    const link = document.createElement("a");
+    link.href = qrImg.src;
+    link.download = "ilikepdfs_qr_code.png";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("QR code downloaded successfully!", "success");
 }
 
 // -------------------------------------------------------------
@@ -2038,6 +2155,81 @@ function addAnnotation(type) {
     renderAnnotationsLayer();
 }
 
+async function generateSignedPdfBytes() {
+    if (!state.signer.rawBytes) {
+        throw new Error("No document loaded to sign");
+    }
+
+    if (state.signer.annotations.length === 0) {
+        throw new Error("Add at least one signature, text, or date stamp before proceeding.");
+    }
+
+    if (typeof PDFLib === 'undefined') {
+        throw new Error("PDF-Lib engine not available in browser.");
+    }
+
+    const { PDFDocument, rgb, StandardFonts } = PDFLib;
+    const freshBytes = state.files[0] ? await state.files[0].arrayBuffer() : state.signer.rawBytes.slice(0);
+    const pdfDoc = await PDFDocument.load(freshBytes);
+    const pages = pdfDoc.getPages();
+    const helveticaFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    const canvasEl = document.getElementById("signer-page-canvas");
+    const renderedWidth = canvasEl.offsetWidth || canvasEl.width;
+    const renderedHeight = canvasEl.offsetHeight || canvasEl.height;
+
+    for (const ann of state.signer.annotations) {
+        const pageIndex = ann.page - 1;
+        if (pageIndex < 0 || pageIndex >= pages.length) continue;
+
+        const targetPage = pages[pageIndex];
+        const { width: pageWidth, height: pageHeight } = targetPage.getSize();
+
+        const scaleX = pageWidth / renderedWidth;
+        const scaleY = pageHeight / renderedHeight;
+
+        const pdfX = ann.x * scaleX;
+        const pdfW = (ann.width || 120) * scaleX;
+        const pdfH = (ann.height || 40) * scaleY;
+        // Coordinate inversion: PDF 0,0 is at bottom-left
+        const pdfY = pageHeight - (ann.y * scaleY) - pdfH;
+
+        if (ann.type === 'sig') {
+            const imgBytes = await fetch(ann.content).then(r => r.arrayBuffer());
+            const embeddedPng = await pdfDoc.embedPng(imgBytes);
+            targetPage.drawImage(embeddedPng, {
+                x: pdfX,
+                y: pdfY,
+                width: pdfW,
+                height: pdfH
+            });
+        } else if (ann.type === 'text' || ann.type === 'date') {
+            let r = 0.06, g = 0.09, b = 0.16;
+            if (ann.color === '#2563eb') { r = 0.15; g = 0.39; b = 0.92; }
+            else if (ann.color === '#dc2626') { r = 0.86; g = 0.15; b = 0.15; }
+
+            const fontSize = (ann.fontSize || 14) * scaleY;
+            targetPage.drawText(ann.content || '', {
+                x: pdfX + 2,
+                y: pdfY + 6,
+                size: fontSize,
+                font: helveticaFont,
+                color: rgb(r, g, b)
+            });
+        } else if (ann.type === 'check') {
+            targetPage.drawText("v", {
+                x: pdfX + 2,
+                y: pdfY + 4,
+                size: 20 * scaleY,
+                font: helveticaFont,
+                color: rgb(0.02, 0.59, 0.41)
+            });
+        }
+    }
+
+    return await pdfDoc.save();
+}
+
 async function saveSignedPdf() {
     if (!state.signer.rawBytes) {
         showToast("No document loaded to sign", "error");
@@ -2052,77 +2244,20 @@ async function saveSignedPdf() {
     try {
         showProcessingModal();
         updateProcessingStep("Signing Document...", "Loading original document structure", 25);
-
-        if (typeof PDFLib === 'undefined') {
-            throw new Error("PDF-Lib engine not available in browser.");
-        }
-
-        const { PDFDocument, rgb, StandardFonts } = PDFLib;
-        const freshBytes = state.files[0] ? await state.files[0].arrayBuffer() : state.signer.rawBytes.slice(0);
-        const pdfDoc = await PDFDocument.load(freshBytes);
-        const pages = pdfDoc.getPages();
-        const helveticaFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-        const canvasEl = document.getElementById("signer-page-canvas");
-        const renderedWidth = canvasEl.offsetWidth || canvasEl.width;
-        const renderedHeight = canvasEl.offsetHeight || canvasEl.height;
+        await sleep(100);
 
         updateProcessingStep("Embedding Signatures...", "Rendering signatures and annotations onto pages", 60);
-
-        for (const ann of state.signer.annotations) {
-            const pageIndex = ann.page - 1;
-            if (pageIndex < 0 || pageIndex >= pages.length) continue;
-
-            const targetPage = pages[pageIndex];
-            const { width: pageWidth, height: pageHeight } = targetPage.getSize();
-
-            const scaleX = pageWidth / renderedWidth;
-            const scaleY = pageHeight / renderedHeight;
-
-            const pdfX = ann.x * scaleX;
-            const pdfW = (ann.width || 120) * scaleX;
-            const pdfH = (ann.height || 40) * scaleY;
-            // Coordinate inversion: PDF 0,0 is at bottom-left
-            const pdfY = pageHeight - (ann.y * scaleY) - pdfH;
-
-            if (ann.type === 'sig') {
-                const imgBytes = await fetch(ann.content).then(r => r.arrayBuffer());
-                const embeddedPng = await pdfDoc.embedPng(imgBytes);
-                targetPage.drawImage(embeddedPng, {
-                    x: pdfX,
-                    y: pdfY,
-                    width: pdfW,
-                    height: pdfH
-                });
-            } else if (ann.type === 'text' || ann.type === 'date') {
-                let r = 0.06, g = 0.09, b = 0.16;
-                if (ann.color === '#2563eb') { r = 0.15; g = 0.39; b = 0.92; }
-                else if (ann.color === '#dc2626') { r = 0.86; g = 0.15; b = 0.15; }
-
-                const fontSize = (ann.fontSize || 14) * scaleY;
-                targetPage.drawText(ann.content || '', {
-                    x: pdfX + 2,
-                    y: pdfY + 6,
-                    size: fontSize,
-                    font: helveticaFont,
-                    color: rgb(r, g, b)
-                });
-            } else if (ann.type === 'check') {
-                targetPage.drawText("v", {
-                    x: pdfX + 2,
-                    y: pdfY + 4,
-                    size: 20 * scaleY,
-                    font: helveticaFont,
-                    color: rgb(0.02, 0.59, 0.41)
-                });
-            }
-        }
+        const signedBytes = await generateSignedPdfBytes();
 
         updateProcessingStep("Compiling PDF...", "Generating clean byte stream", 85);
-        const signedBytes = await pdfDoc.save();
-
         const blob = new Blob([signedBytes], { type: 'application/pdf' });
+
+        if (window._previousResultBlobUrl) {
+            try { URL.revokeObjectURL(window._previousResultBlobUrl); } catch (e) {}
+        }
         const blobUrl = URL.createObjectURL(blob);
+        window._previousResultBlobUrl = blobUrl;
+
         const origFile = state.files[0];
         const origName = origFile ? origFile.name : "document.pdf";
         const resultName = origName.replace(/\.pdf$/i, '') + "_signed.pdf";
@@ -2145,6 +2280,133 @@ async function saveSignedPdf() {
         console.error("Signing error:", err);
         hideProcessingModal();
         showToast("Error signing document: " + err.message, "error");
+    }
+}
+
+let _activeShareXhr = null;
+
+function cancelShareUpload() {
+    if (_activeShareXhr) {
+        _activeShareXhr.abort();
+        _activeShareXhr = null;
+    }
+    const modal = document.getElementById("share-progress-modal");
+    if (modal) modal.style.display = "none";
+    const shareBtn = document.getElementById("btn-signer-share");
+    if (shareBtn) shareBtn.disabled = false;
+    showToast("Mobile sharing cancelled.", "info");
+}
+
+async function shareSignedPdfToMobile() {
+    if (!state.signer.rawBytes) {
+        showToast("No document loaded to sign", "error");
+        return;
+    }
+    if (state.signer.annotations.length === 0) {
+        showToast("Add at least one signature, text, or date stamp before sharing.", "info");
+        return;
+    }
+
+    const shareBtn = document.getElementById("btn-signer-share");
+    if (shareBtn && shareBtn.disabled) return;
+
+    // Explicit confirmation dialog for client-side privacy protection
+    const confirmed = confirm(
+        "📱 Share to Mobile\n\n" +
+        "Sign Studio processes documents entirely in your browser.\n" +
+        "To generate a QR code for mobile download, a temporary copy will be uploaded to your server for 30 minutes with automatic expiration.\n\n" +
+        "Your original file remains on your device. Do you want to proceed?"
+    );
+    if (!confirmed) return;
+
+    const progressModal = document.getElementById("share-progress-modal");
+    const progressFill = document.getElementById("share-progress-fill");
+    const progressPercent = document.getElementById("share-progress-percent");
+    const progressText = document.getElementById("share-progress-text");
+
+    try {
+        if (shareBtn) shareBtn.disabled = true;
+
+        if (progressModal) {
+            if (progressFill) progressFill.style.width = "0%";
+            if (progressPercent) progressPercent.textContent = "0%";
+            if (progressText) progressText.textContent = "Rendering signed PDF...";
+            progressModal.style.display = "flex";
+        }
+
+        const signedBytes = await generateSignedPdfBytes();
+        const blob = new Blob([signedBytes], { type: "application/pdf" });
+
+        const origFile = state.files[0];
+        const origName = origFile ? origFile.name : "document.pdf";
+        const resultName = origName.replace(/\.pdf$/i, "") + "_signed.pdf";
+
+        if (progressText) progressText.textContent = "Uploading to temporary share...";
+
+        const formData = new FormData();
+        formData.append("file", blob, resultName);
+
+        const xhr = new XMLHttpRequest();
+        _activeShareXhr = xhr;
+
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+                const pct = Math.round((e.loaded / e.total) * 100);
+                if (progressFill) progressFill.style.width = `${pct}%`;
+                if (progressPercent) progressPercent.textContent = `${pct}%`;
+                if (progressText) progressText.textContent = `Uploading ${pct}%...`;
+            }
+        };
+
+        xhr.onload = () => {
+            _activeShareXhr = null;
+            if (shareBtn) shareBtn.disabled = false;
+            if (progressModal) progressModal.style.display = "none";
+
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const res = JSON.parse(xhr.responseText);
+                    if (res.success) {
+                        showResultModal(res);
+                        showToast("Mobile QR share link generated!", "success");
+                    } else {
+                        showToast(res.error || "Failed to create share link.", "error");
+                    }
+                } catch (e) {
+                    showToast("Invalid response from server.", "error");
+                }
+            } else {
+                try {
+                    const res = JSON.parse(xhr.responseText);
+                    showToast(res.error || `Upload failed (${xhr.status})`, "error");
+                } catch (e) {
+                    showToast(`Upload failed (${xhr.status})`, "error");
+                }
+            }
+        };
+
+        xhr.onerror = () => {
+            _activeShareXhr = null;
+            if (shareBtn) shareBtn.disabled = false;
+            if (progressModal) progressModal.style.display = "none";
+            showToast("Network error uploading document to share.", "error");
+        };
+
+        xhr.onabort = () => {
+            _activeShareXhr = null;
+            if (shareBtn) shareBtn.disabled = false;
+            if (progressModal) progressModal.style.display = "none";
+        };
+
+        xhr.open("POST", "/api/share-cache");
+        xhr.send(formData);
+
+    } catch (err) {
+        console.error("Share error:", err);
+        _activeShareXhr = null;
+        if (shareBtn) shareBtn.disabled = false;
+        if (progressModal) progressModal.style.display = "none";
+        showToast("Error preparing document: " + err.message, "error");
     }
 }
 

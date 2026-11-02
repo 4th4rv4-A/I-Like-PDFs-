@@ -7,9 +7,13 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const ilovepdfService = require("./ilovepdfService");
+const shareManager = require("./shareManager");
+const shareRoutes = require("./routes/shareRoutes");
+const shareConfig = require("./share/shareConfig");
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = shareConfig.port;
+const host = shareConfig.host;
 
 // Configure multer for in-memory file uploads
 const upload = multer({
@@ -33,6 +37,7 @@ setInterval(() => {
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+app.use(shareRoutes);
 
 // Tool definitions for UI metadata
 const TOOLS = [
@@ -480,6 +485,19 @@ app.post("/api/process", upload.array("files", 25), async (req, res) => {
             timestamp: Date.now()
         });
 
+        // Resilient Mobile Share creation (primary process NEVER fails if share encounters an issue)
+        let mobileShare = { available: false, reason: "INITIALIZING" };
+        try {
+            mobileShare = await shareManager.createShare(buffer, downloadFilename, contentType);
+        } catch (shareErr) {
+            console.warn("[Process] Mobile share creation warning (fallback active):", shareErr.message);
+            mobileShare = {
+                available: false,
+                reason: shareErr.code || "SHARE_FAILED",
+                message: shareErr.message
+            };
+        }
+
         // Calculate original total size
         const originalTotalSize = files.reduce((acc, f) => acc + f.size, 0);
 
@@ -495,7 +513,8 @@ app.post("/api/process", upload.array("files", 25), async (req, res) => {
             savedPercent: originalTotalSize > 0 && buffer.length < originalTotalSize
                 ? Math.round(((originalTotalSize - buffer.length) / originalTotalSize) * 100)
                 : 0,
-            timer: processResult.timer || "0.5s"
+            timer: processResult.timer || "0.5s",
+            mobile: mobileShare
         });
     } catch (err) {
         console.error("[Process Error]", err);
@@ -521,8 +540,9 @@ app.get("/api/download/:downloadId/:filename", (req, res) => {
     res.send(item.buffer);
 });
 
-app.listen(port, () => {
+app.listen(port, host, () => {
     console.log(`\n======================================================`);
-    console.log(`  "I Like PDFs" server running on http://localhost:${port}`);
+    console.log(`  "I Like PDFs" server running on http://${host}:${port}`);
     console.log(`======================================================\n`);
 });
+

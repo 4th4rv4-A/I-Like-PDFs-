@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{TITLE}} - I Like PDFs Mobile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e11d48;
+            --primary-hover: #be123c;
+            --bg-base: #090d16;
+            --bg-card: #131b2e;
+            --border-card: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(225, 29, 72, 0.15), transparent 60%),
+                radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.08), transparent 50%);
+        }
+
+        .mobile-container {
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .brand-header {
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding-bottom: 4px;
+        }
+
+        .brand-logo {
+            font-size: 1.7rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-logo .heart {
+            color: var(--primary);
+        }
+
+        .share-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            padding: 28px 24px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .share-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #e11d48, #f43f5e, #fb7185);
+        }
+
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 999px;
+            margin-bottom: 20px;
+        }
+
+        .badge-https {
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-lan {
+            background: rgba(59, 130, 246, 0.12);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .file-icon-wrapper {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 16px;
+            background: rgba(225, 29, 72, 0.1);
+            border: 1px solid rgba(225, 29, 72, 0.25);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+        }
+
+        .file-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        .file-meta-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .file-meta-pill {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .timer-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            color: #fbbf24;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 999px;
+            margin-bottom: 24px;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-download {
+            background: var(--primary);
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 16px 24px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 20px -5px rgba(225, 29, 72, 0.5);
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-download:hover, .btn-download:active {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-preview {
+            background: rgba(255, 255, 255, 0.06);
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 14px 24px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .btn-preview:hover, .btn-preview:active {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Expired View Styles */
+        .expired-card {
+            background: #181119;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            border-radius: var(--radius-lg);
+            padding: 36px 24px;
+            text-align: center;
+        }
+
+        .expired-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .expired-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #f87171;
+            margin-bottom: 8px;
+        }
+
+        .expired-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Brand Header -->
+        <div class="brand-header">
+            <div class="brand-logo">
+                <span>I</span> <span class="heart">♥</span> <span>PDFs</span>
+            </div>
+        </div>
+
+        {{CONTENT}}
+
+        <div class="footer-note">
+            Processed with privacy • Zero persistent server tracking
+        </div>
+    </div>
+
+    <script>
+        // Real-time client countdown
+        const expiresAtStr = "{{EXPIRES_AT}}";
+        if (expiresAtStr && expiresAtStr !== 'null') {
+            const expiresTime = new Date(expiresAtStr).getTime();
+            const timerEl = document.getElementById('countdown-text');
+
+            function updateTimer() {
+                const now = Date.now();
+                const diff = expiresTime - now;
+                if (diff <= 0) {
+                    if (timerEl) timerEl.textContent = 'Link Expired';
+                    window.location.reload();
+                    return;
+                }
+                const mins = Math.floor(diff / 60000);
+                const secs = Math.floor((diff % 60000) / 1000);
+                if (timerEl) {
+                    timerEl.textContent = `Expires in ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                }
+            }
+
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+    </script>
+</body>
+</html>

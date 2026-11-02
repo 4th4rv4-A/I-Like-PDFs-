@@ -234,6 +234,9 @@
 
                     <!-- Save Action -->
                     <div class="signer-actions">
+                        <button type="button" class="signer-share-btn" onclick="shareSignedPdfToMobile()" id="btn-signer-share" title="Generate mobile QR code">
+                            <span>📱 Share to Mobile</span>
+                        </button>
                         <button type="button" class="signer-save-btn" onclick="saveSignedPdf()">
                             <span>💾 Sign & Download PDF</span>
                         </button>
@@ -368,6 +371,55 @@
                         <div class="stat-badge" id="stat-savings-badge">Saved 0%</div>
                     </div>
 
+                    <!-- Scan-to-Mobile QR Code Section -->
+                    <div class="qr-share-section" id="qr-share-section">
+                        <div class="qr-card">
+                            <div class="qr-card-header">
+                                <div class="qr-title-group">
+                                    <span class="qr-badge-icon">📱</span>
+                                    <div>
+                                        <h4 class="qr-card-title">Scan to Download on Phone</h4>
+                                        <p class="qr-card-subtitle">Point your mobile camera at this code to download directly</p>
+                                    </div>
+                                </div>
+                                <div class="qr-timer-pill" id="qr-timer-pill">
+                                    <span class="pulse-dot"></span>
+                                    <span id="qr-countdown-text">Expires in 30:00</span>
+                                </div>
+                            </div>
+                            
+                            <div class="qr-card-body" id="qr-card-body-active">
+                                <div class="qr-frame-wrapper">
+                                    <img id="qr-code-img" src="" alt="Mobile QR Code" class="qr-image" />
+                                </div>
+                                <div class="qr-action-details">
+                                    <div class="qr-network-badge" id="qr-network-badge">
+                                        <span id="qr-network-icon">📶</span> <span id="qr-network-text">Local Wi-Fi Transfer</span>
+                                    </div>
+                                    <div class="qr-link-box">
+                                        <input type="text" id="qr-mobile-url-input" class="qr-link-input" readonly value="" />
+                                        <button type="button" class="qr-copy-btn" id="btn-copy-qr-link" onclick="copyMobileDownloadUrl()" title="Copy Mobile Link">
+                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <span id="btn-copy-text">Copy Link</span>
+                                        </button>
+                                    </div>
+                                    <div class="qr-mini-actions">
+                                        <button type="button" class="qr-secondary-btn" onclick="downloadQrCodeImage()">
+                                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            <span>Save QR Image</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fallback view if LAN unreachable -->
+                            <div class="qr-unavailable-notice" id="qr-unavailable-notice" style="display: none;">
+                                <span class="unavail-icon">ℹ️</span>
+                                <p id="qr-unavailable-msg">Mobile sharing is unavailable on localhost without a reachable LAN IP or public domain.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Download Button -->
                     <div class="result-actions">
                         <a href="#" class="download-btn" id="btn-download-result" download>
@@ -454,6 +506,29 @@
             <div class="sig-dialog-footer">
                 <button type="button" class="sig-cancel-btn" onclick="closeSignatureModal()">Cancel</button>
                 <button type="button" class="sig-insert-btn" onclick="applySignature()">Insert Signature</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign Studio Mobile Share Progress Modal -->
+    <div class="share-progress-modal" id="share-progress-modal" style="display: none;">
+        <div class="share-progress-dialog">
+            <div class="share-progress-header">
+                <span class="share-modal-icon">📱</span>
+                <div>
+                    <h3 class="share-modal-title">Generating Mobile Link</h3>
+                    <p class="share-modal-sub">Uploading temporary copy to generate QR code (30m safety window)</p>
+                </div>
+            </div>
+            <div class="share-progress-track">
+                <div class="share-progress-fill" id="share-progress-fill" style="width: 0%;"></div>
+            </div>
+            <div class="share-progress-meta">
+                <span id="share-progress-text">Preparing document...</span>
+                <span id="share-progress-percent">0%</span>
+            </div>
+            <div class="share-progress-footer">
+                <button type="button" class="share-cancel-btn" onclick="cancelShareUpload()">Cancel</button>
             </div>
         </div>
     </div>
