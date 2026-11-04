@@ -152,6 +152,33 @@ class ILovePdfService {
     }
 
     /**
+     * Uploads a remote webpage URL to the assigned worker server (for htmlpdf)
+     */
+    async uploadUrl(server, taskId, url) {
+        const token = await this.getAuthToken();
+        const formData = new FormData();
+        formData.append("task", taskId);
+        formData.append("cloud_file", url);
+
+        const res = await fetch(`https://${server}/v1/upload`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "User-Agent": this.userAgent
+            },
+            body: formData
+        });
+
+        if (!res.ok) {
+            const err = await res.text();
+            throw new Error(`URL upload to ${server} failed (${res.status}): ${err}`);
+        }
+
+        const data = await res.json();
+        return data.server_filename;
+    }
+
+    /**
      * Triggers tool processing on the assigned worker
      */
     async processTask(server, taskId, tool, uploadedFiles, options = {}) {
@@ -236,6 +263,17 @@ class ILovePdfService {
             formData.append("convert_to", options.convert_to || "docx");
         } else if (tool === "officepdf") {
             // officepdf accepts word, excel, powerpoint and converts to pdf
+        } else if (tool === "htmlpdf") {
+            if (options.single_page !== undefined) {
+                formData.append("single_page", String(options.single_page));
+            }
+            if (options.page_size) formData.append("page_size", options.page_size);
+            if (options.page_orientation || options.orientation) {
+                formData.append("page_orientation", options.page_orientation || options.orientation);
+            }
+            if (options.view_width) formData.append("view_width", String(options.view_width));
+        } else if (tool === "pdfmarkdown") {
+            // pdfmarkdown converts PDF directly to AI-ready markdown
         } else if (tool === "organize") {
             const filesMap = {};
             uploadedFiles.forEach((file, idx) => {

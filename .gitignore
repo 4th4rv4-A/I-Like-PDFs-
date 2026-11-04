@@ -79,3 +79,8 @@ desktop.ini
 # ==========================================
 .gemini/
 .agents/
+.playwright-mcp/
+.cache/
+.temp/
+*.tmp
+*.bak

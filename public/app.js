@@ -52,273 +52,556 @@ const state = {
 // Tool Catalog Definitions with Categories, Accents, and Defaults
 const DEFAULT_TOOLS = [
     {
-        id: "compress",
-        name: "Compress PDF",
-        tagline: "Reduce PDF file size while preserving optimum quality",
-        category: "optimize",
-        icon: "🗜️",
-        color: "#059669",
-        bgLight: "#ecfdf5",
-        badge: "Most Popular",
-        minFiles: 1,
-        maxFiles: 5,
-        accept: ".pdf",
-        defaultOptions: { compression_level: "recommended" }
+        "id": "merge",
+        "name": "Merge PDF",
+        "tagline": "Combine multiple PDF files in any order you choose",
+        "category": "organize",
+        "icon": "📑",
+        "color": "#dc2626",
+        "bgLight": "#fef2f2",
+        "badge": "Essential",
+        "minFiles": 2,
+        "maxFiles": 20,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
     },
     {
-        id: "merge",
-        name: "Merge PDF",
-        tagline: "Combine multiple PDF files in any order you choose",
-        category: "organize",
-        icon: "📑",
-        color: "#dc2626",
-        bgLight: "#fef2f2",
-        badge: "Essential",
-        minFiles: 2,
-        maxFiles: 20,
-        accept: ".pdf",
-        defaultOptions: { output_filename: "ilikepdfs_merged.pdf" }
-    },
-    {
-        id: "split",
-        name: "Split PDF",
-        tagline: "Extract pages or separate a PDF into individual files",
-        category: "organize",
-        icon: "✂️",
-        color: "#ea580c",
-        bgLight: "#fff7ed",
-        badge: "Precise",
-        minFiles: 1,
-        maxFiles: 1,
-        accept: ".pdf",
-        defaultOptions: { split_mode: "ranges", ranges: "1-end" }
-    },
-    {
-        id: "organize",
-        name: "Organize PDF",
-        tagline: "Sort, reorder, rotate, or delete specific pages interactively",
-        category: "organize",
-        icon: "🗂️",
-        color: "#0284c7",
-        bgLight: "#f0f9ff",
-        badge: "Visual Canvas",
-        minFiles: 1,
-        maxFiles: 1,
-        accept: ".pdf",
-        defaultOptions: {}
-    },
-    {
-        id: "rotate",
-        name: "Rotate PDF",
-        tagline: "Rotate pages 90°, 180° or 270° clockwise",
-        category: "organize",
-        icon: "🔄",
-        color: "#2563eb",
-        bgLight: "#eff6ff",
-        badge: "Instant",
-        minFiles: 1,
-        maxFiles: 10,
-        accept: ".pdf",
-        defaultOptions: { rotate_angle: "90" }
-    },
-    {
-        id: "pdfoffice",
-        name: "PDF to Word",
-        tagline: "Convert PDF documents into editable DOCX format",
-        category: "convert",
-        icon: "📝",
-        color: "#2563eb",
-        bgLight: "#eff6ff",
-        badge: "Editable DOCX",
-        minFiles: 1,
-        maxFiles: 5,
-        accept: ".pdf",
-        defaultOptions: {}
-    },
-    {
-        id: "officepdf",
-        name: "Word to PDF",
-        tagline: "Convert Word DOC/DOCX files into clean, professional PDFs",
-        category: "convert",
-        icon: "📄",
-        color: "#1d4ed8",
-        bgLight: "#dbeafe",
-        badge: "Office Engine",
-        minFiles: 1,
-        maxFiles: 10,
-        accept: ".doc,.docx,.ppt,.pptx,.xls,.xlsx",
-        defaultOptions: {}
-    },
-    {
-        id: "pdfjpg",
-        name: "PDF to JPG",
-        tagline: "Convert PDF pages into high-definition JPG images",
-        category: "convert",
-        icon: "🖼️",
-        color: "#7c3aed",
-        bgLight: "#f5f3ff",
-        badge: "High Res",
-        minFiles: 1,
-        maxFiles: 1,
-        accept: ".pdf",
-        defaultOptions: { pdfjpg_mode: "pages" }
-    },
-    {
-        id: "imagepdf",
-        name: "JPG to PDF",
-        tagline: "Convert and compile JPG, PNG, or WebP images into a PDF",
-        category: "convert",
-        icon: "🌅",
-        color: "#d97706",
-        bgLight: "#fffbeb",
-        badge: "Fast Convert",
-        minFiles: 1,
-        maxFiles: 20,
-        accept: ".jpg,.jpeg,.png,.webp",
-        defaultOptions: { orientation: "portrait", margin: "0", pagesize: "fit" }
-    },
-    {
-        id: "watermark",
-        name: "Watermark PDF",
-        tagline: "Stamp custom text or confidential watermark across pages",
-        category: "security",
-        icon: "💧",
-        color: "#0891b2",
-        bgLight: "#ecfeff",
-        badge: "Brand & Secure",
-        minFiles: 1,
-        maxFiles: 5,
-        accept: ".pdf",
-        defaultOptions: { 
-            text: "CONFIDENTIAL", 
-            vertical_position: "middle", 
-            horizontal_position: "center", 
-            opacity: "70", 
-            font_size: "36",
-            rotation: "45",
-            font_color: "#e11d48",
-            mosaic: "0"
+        "id": "split",
+        "name": "Split PDF",
+        "tagline": "Extract pages or separate a PDF into individual files",
+        "category": "organize",
+        "icon": "✂️",
+        "color": "#ea580c",
+        "bgLight": "#fff7ed",
+        "badge": "Precise",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {
+            "split_mode": "ranges",
+            "ranges": "1-end"
         }
     },
     {
-        id: "pagenumber",
-        name: "Page Numbers",
-        tagline: "Add customizable numbering to headers or footers",
-        category: "organize",
-        icon: "🔢",
-        color: "#4f46e5",
-        bgLight: "#eef2ff",
-        badge: "Pagination",
-        minFiles: 1,
-        maxFiles: 5,
-        accept: ".pdf",
-        defaultOptions: { 
-            vertical_position: "bottom", 
-            horizontal_position: "right",
-            format: "Page {n} of {nb}",
-            starting_number: "1",
-            margin: "normal",
-            font_size: "14",
-            font_color: "#1e293b"
+        "id": "removepages",
+        "name": "Remove Pages",
+        "tagline": "Delete unwanted pages interactively from your PDF document",
+        "category": "organize",
+        "icon": "🗑️",
+        "color": "#e11d48",
+        "bgLight": "#fff1f2",
+        "badge": "Page Remover",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "extractpages",
+        "name": "Extract Pages",
+        "tagline": "Separate specific pages or all pages into individual PDF files",
+        "category": "organize",
+        "icon": "📑",
+        "color": "#ea580c",
+        "bgLight": "#fff7ed",
+        "badge": "Page Extractor",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {
+            "split_mode": "extract_pages"
         }
     },
     {
-        id: "repair",
-        name: "Repair PDF",
-        tagline: "Analyze and restore damaged, corrupt, or unreadable PDFs",
-        category: "optimize",
-        icon: "🩹",
-        color: "#16a34a",
-        bgLight: "#f0fdf4",
-        badge: "Restoration",
-        minFiles: 1,
-        maxFiles: 1,
-        accept: ".pdf",
-        defaultOptions: {}
+        "id": "organize",
+        "name": "Organize PDF",
+        "tagline": "Sort, reorder, rotate, or delete specific pages interactively",
+        "category": "organize",
+        "icon": "🗂️",
+        "color": "#0284c7",
+        "bgLight": "#f0f9ff",
+        "badge": "Visual Canvas",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
     },
     {
-        id: "pdfocr",
-        name: "OCR PDF",
-        tagline: "Convert scanned PDFs into searchable, selectable text",
-        category: "optimize",
-        icon: "👁️",
-        color: "#9333ea",
-        bgLight: "#faf5ff",
-        badge: "AI Searchable",
-        minFiles: 1,
-        maxFiles: 1,
-        accept: ".pdf",
-        defaultOptions: { ocr_language: "eng" }
+        "id": "scan",
+        "name": "Scan to PDF",
+        "tagline": "Capture document photos from mobile or desktop and compile to PDF",
+        "category": "organize",
+        "icon": "📱",
+        "color": "#059669",
+        "bgLight": "#ecfdf5",
+        "badge": "Mobile / Camera",
+        "minFiles": 1,
+        "maxFiles": 20,
+        "accept": ".jpg,.jpeg,.png,.webp,.pdf",
+        "options": [],
+        "defaultOptions": {
+            "orientation": "portrait",
+            "margin": "0",
+            "pagesize": "fit"
+        }
     },
     {
-        id: "pdfa",
-        name: "PDF to PDF/A",
-        tagline: "Transform documents into ISO-compliant long-term archives",
-        category: "convert",
-        icon: "🏛️",
-        color: "#475569",
-        bgLight: "#f8fafc",
-        badge: "ISO Standard",
-        minFiles: 1,
-        maxFiles: 1,
-        accept: ".pdf",
-        defaultOptions: { conformance: "pdfa-2b" }
+        "id": "compress",
+        "name": "Compress PDF",
+        "tagline": "Reduce PDF file size while preserving optimum quality",
+        "category": "optimize",
+        "icon": "🗜️",
+        "color": "#059669",
+        "bgLight": "#ecfdf5",
+        "badge": "Most Popular",
+        "minFiles": 1,
+        "maxFiles": 5,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {
+            "compression_level": "recommended"
+        }
     },
     {
-        id: "protect",
-        name: "Protect PDF",
-        tagline: "Encrypt and secure your PDF with an uncrackable password",
-        category: "security",
-        icon: "🔒",
-        color: "#0d9488",
-        bgLight: "#f0fdfa",
-        badge: "Security",
-        minFiles: 1,
-        maxFiles: 1,
-        accept: ".pdf",
-        defaultOptions: { password: "" }
+        "id": "repair",
+        "name": "Repair PDF",
+        "tagline": "Analyze and restore damaged, corrupt, or unreadable PDFs",
+        "category": "optimize",
+        "icon": "🩹",
+        "color": "#16a34a",
+        "bgLight": "#f0fdf4",
+        "badge": "Restoration",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
     },
     {
-        id: "unlock",
-        name: "Unlock PDF",
-        tagline: "Remove password protection from secured PDFs",
-        category: "security",
-        icon: "🔓",
-        color: "#6366f1",
-        bgLight: "#e0e7ff",
-        badge: "Decryption",
-        minFiles: 1,
-        maxFiles: 1,
-        accept: ".pdf",
-        defaultOptions: { password: "" }
+        "id": "pdfocr",
+        "name": "OCR PDF",
+        "tagline": "Convert scanned PDFs into searchable, selectable text",
+        "category": "optimize",
+        "icon": "👁️",
+        "color": "#9333ea",
+        "bgLight": "#faf5ff",
+        "badge": "AI Searchable",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {
+            "ocr_language": "eng"
+        }
     },
     {
-        id: "sign",
-        name: "Sign PDF",
-        tagline: "Sign documents with drawn signature, type name, add date & text stamps",
-        category: "security",
-        icon: "✍️",
-        color: "#059669",
-        bgLight: "#ecfdf5",
-        badge: "E-Signature",
-        minFiles: 1,
-        maxFiles: 1,
-        accept: ".pdf",
-        defaultOptions: {}
+        "id": "imagepdf",
+        "name": "JPG to PDF",
+        "tagline": "Convert and compile JPG, PNG, or WebP images into a PDF",
+        "category": "convert",
+        "icon": "🌅",
+        "color": "#d97706",
+        "bgLight": "#fffbeb",
+        "badge": "Fast Convert",
+        "minFiles": 1,
+        "maxFiles": 20,
+        "accept": ".jpg,.jpeg,.png,.webp",
+        "options": [],
+        "defaultOptions": {
+            "orientation": "portrait",
+            "margin": "0",
+            "pagesize": "fit"
+        }
     },
     {
-        id: "viewpdf",
-        name: "PDF Reader & Viewer",
-        tagline: "Open, view, inspect, search, and print PDFs with in-browser reader",
-        category: "organize",
-        icon: "📖",
-        color: "#0284c7",
-        bgLight: "#f0f9ff",
-        badge: "Reader Studio",
-        minFiles: 1,
-        maxFiles: 1,
-        accept: ".pdf",
-        defaultOptions: {}
+        "id": "wordpdf",
+        "name": "Word to PDF",
+        "tagline": "Convert Word DOC and DOCX files into clean, professional PDFs",
+        "category": "convert",
+        "icon": "📘",
+        "color": "#2563eb",
+        "bgLight": "#eff6ff",
+        "badge": "DOC to PDF",
+        "minFiles": 1,
+        "maxFiles": 10,
+        "accept": ".doc,.docx",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "powerpointpdf",
+        "name": "PowerPoint to PDF",
+        "tagline": "Turn PPT and PPTX slideshows into easily viewable PDFs",
+        "category": "convert",
+        "icon": "📊",
+        "color": "#ea580c",
+        "bgLight": "#fff7ed",
+        "badge": "PPT to PDF",
+        "minFiles": 1,
+        "maxFiles": 10,
+        "accept": ".ppt,.pptx",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "excelpdf",
+        "name": "Excel to PDF",
+        "tagline": "Convert Excel XLS and XLSX spreadsheets to paginated PDFs",
+        "category": "convert",
+        "icon": "📗",
+        "color": "#16a34a",
+        "bgLight": "#f0fdf4",
+        "badge": "XLS to PDF",
+        "minFiles": 1,
+        "maxFiles": 10,
+        "accept": ".xls,.xlsx",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "htmlpdf",
+        "name": "HTML to PDF",
+        "tagline": "Convert any public webpage or URL into a clean, high-fidelity PDF",
+        "category": "convert",
+        "icon": "🌐",
+        "color": "#0891b2",
+        "bgLight": "#ecfeff",
+        "badge": "Webpage to PDF",
+        "minFiles": 0,
+        "maxFiles": 1,
+        "accept": ".html,.htm",
+        "options": [],
+        "defaultOptions": {
+            "url": "",
+            "page_size": "A4",
+            "orientation": "portrait",
+            "single_page": "0"
+        }
+    },
+    {
+        "id": "pdfjpg",
+        "name": "PDF to JPG",
+        "tagline": "Convert PDF pages into high-definition JPG images",
+        "category": "convert",
+        "icon": "🖼️",
+        "color": "#7c3aed",
+        "bgLight": "#f5f3ff",
+        "badge": "High Res",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {
+            "pdfjpg_mode": "pages"
+        }
+    },
+    {
+        "id": "pdfoffice",
+        "name": "PDF to Word",
+        "tagline": "Convert PDF documents into editable DOCX format",
+        "category": "convert",
+        "icon": "📝",
+        "color": "#2563eb",
+        "bgLight": "#eff6ff",
+        "badge": "Editable DOCX",
+        "minFiles": 1,
+        "maxFiles": 5,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "pdfpowerpoint",
+        "name": "PDF to PowerPoint",
+        "tagline": "Convert PDF documents into editable PPTX slideshows",
+        "category": "convert",
+        "icon": "📽️",
+        "color": "#ea580c",
+        "bgLight": "#fff7ed",
+        "badge": "PDF to PPTX",
+        "minFiles": 1,
+        "maxFiles": 5,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "pdfexcel",
+        "name": "PDF to Excel",
+        "tagline": "Pull data and tables straight from PDFs into Excel spreadsheets",
+        "category": "convert",
+        "icon": "📈",
+        "color": "#16a34a",
+        "bgLight": "#f0fdf4",
+        "badge": "PDF to XLSX",
+        "minFiles": 1,
+        "maxFiles": 5,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "pdfa",
+        "name": "PDF to PDF/A",
+        "tagline": "Transform documents into ISO-compliant long-term archives",
+        "category": "convert",
+        "icon": "🏛️",
+        "color": "#475569",
+        "bgLight": "#f8fafc",
+        "badge": "ISO Standard",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {
+            "conformance": "pdfa-2b"
+        }
+    },
+    {
+        "id": "rotate",
+        "name": "Rotate PDF",
+        "tagline": "Rotate pages 90°, 180° or 270° clockwise",
+        "category": "organize",
+        "icon": "🔄",
+        "color": "#2563eb",
+        "bgLight": "#eff6ff",
+        "badge": "Instant",
+        "minFiles": 1,
+        "maxFiles": 10,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {
+            "rotate_angle": "90"
+        }
+    },
+    {
+        "id": "pagenumber",
+        "name": "Page Numbers",
+        "tagline": "Add customizable numbering to headers or footers",
+        "category": "organize",
+        "icon": "🔢",
+        "color": "#4f46e5",
+        "bgLight": "#eef2ff",
+        "badge": "Pagination",
+        "minFiles": 1,
+        "maxFiles": 5,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "watermark",
+        "name": "Watermark PDF",
+        "tagline": "Stamp custom text or confidential watermark across pages",
+        "category": "security",
+        "icon": "💧",
+        "color": "#0891b2",
+        "bgLight": "#ecfeff",
+        "badge": "Brand & Secure",
+        "minFiles": 1,
+        "maxFiles": 5,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "crop",
+        "name": "Crop PDF",
+        "tagline": "Trim margins and adjust document CropBox boundaries with precision",
+        "category": "organize",
+        "icon": "📐",
+        "color": "#0284c7",
+        "bgLight": "#f0f9ff",
+        "badge": "CropBox",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {
+            "crop_x": 0,
+            "crop_y": 0,
+            "crop_w": 500,
+            "crop_h": 700,
+            "apply_all": "1"
+        }
+    },
+    {
+        "id": "editpdf",
+        "name": "Edit PDF",
+        "tagline": "Add text, signatures, shapes, checkmarks, and date annotations",
+        "category": "organize",
+        "icon": "✏️",
+        "color": "#7c3aed",
+        "bgLight": "#f5f3ff",
+        "badge": "Visual Studio",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "forms",
+        "name": "PDF Forms",
+        "tagline": "Fill interactive AcroForm textboxes and checkboxes, then flatten",
+        "category": "security",
+        "icon": "📋",
+        "color": "#0d9488",
+        "bgLight": "#f0fdfa",
+        "badge": "AcroForms",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "unlock",
+        "name": "Unlock PDF",
+        "tagline": "Remove password protection from secured PDFs",
+        "category": "security",
+        "icon": "🔓",
+        "color": "#6366f1",
+        "bgLight": "#e0e7ff",
+        "badge": "Decryption",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {
+            "password": ""
+        }
+    },
+    {
+        "id": "protect",
+        "name": "Protect PDF",
+        "tagline": "Encrypt and secure your PDF with an uncrackable password",
+        "category": "security",
+        "icon": "🔒",
+        "color": "#0d9488",
+        "bgLight": "#f0fdfa",
+        "badge": "Security",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {
+            "password": ""
+        }
+    },
+    {
+        "id": "sign",
+        "name": "Sign PDF",
+        "tagline": "Sign documents with drawn signature, type name, add date & text stamps",
+        "category": "security",
+        "icon": "✍️",
+        "color": "#059669",
+        "bgLight": "#ecfdf5",
+        "badge": "E-Signature",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "redact",
+        "name": "Redact PDF",
+        "tagline": "Permanently blackout sensitive text and graphics with zero vector leakage",
+        "category": "security",
+        "icon": "⬛",
+        "color": "#dc2626",
+        "bgLight": "#fef2f2",
+        "badge": "Zero-Leak",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "compare",
+        "name": "Compare PDF",
+        "tagline": "Side-by-side document comparison to spot differences and page changes",
+        "category": "security",
+        "icon": "🔍",
+        "color": "#4f46e5",
+        "bgLight": "#eef2ff",
+        "badge": "Visual Diff",
+        "minFiles": 2,
+        "maxFiles": 2,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "summarize",
+        "name": "AI Summarizer",
+        "tagline": "Generate instant executive summaries, key bullet points, and takeaways",
+        "category": "optimize",
+        "icon": "⚡",
+        "color": "#8b5cf6",
+        "bgLight": "#faf5ff",
+        "badge": "AI TL;DR",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {
+            "summarize_length": "medium"
+        }
+    },
+    {
+        "id": "translate",
+        "name": "Translate PDF",
+        "tagline": "Translate document content into 25+ languages with layout fidelity",
+        "category": "convert",
+        "icon": "🌍",
+        "color": "#06b6d4",
+        "bgLight": "#ecfeff",
+        "badge": "Multilingual",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {
+            "target_language": "Spanish"
+        }
+    },
+    {
+        "id": "pdfmarkdown",
+        "name": "PDF to Markdown",
+        "tagline": "Extract clean Markdown text, tables, and headers for LLMs & AI notes",
+        "category": "convert",
+        "icon": "🤖",
+        "color": "#8b5cf6",
+        "bgLight": "#f5f3ff",
+        "badge": "AI Ready",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "viewpdf",
+        "name": "PDF Reader & Viewer",
+        "tagline": "Open, view, inspect, search, and print PDFs with in-browser reader",
+        "category": "organize",
+        "icon": "📖",
+        "color": "#0284c7",
+        "bgLight": "#f0f9ff",
+        "badge": "Reader Studio",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
     }
 ];
 
@@ -985,6 +1268,248 @@ function renderToolOptions(tool) {
             `;
             break;
 
+        case "htmlpdf":
+            html = `
+                <div class="form-group">
+                    <label class="form-label">Webpage URL</label>
+                    <input type="url" class="form-input" id="opt-html-url" 
+                           placeholder="https://example.com" 
+                           value="${state.options.url || ''}"
+                           oninput="setOption('url', this.value); updateProcessButtonState();">
+                    <span class="form-hint">Enter the full web address (e.g. https://en.wikipedia.org).</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Page Layout</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Page Size</span>
+                            <select class="form-select" onchange="setOption('page_size', this.value)">
+                                <option value="A4" selected>A4 Standard</option>
+                                <option value="Letter">US Letter</option>
+                            </select>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Orientation</span>
+                            <select class="form-select" onchange="setOption('orientation', this.value)">
+                                <option value="portrait" selected>Portrait</option>
+                                <option value="landscape">Landscape</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.88rem; color: var(--text-primary); font-weight: 500;">
+                        <input type="checkbox" onchange="setOption('single_page', this.checked ? '1' : '0')">
+                        <span>Single Continuous Page (No page splits)</span>
+                    </label>
+                </div>
+            `;
+            break;
+
+        case "pdfmarkdown":
+            html = `
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--primary);">
+                            <span style="font-size: 1.2rem;">🤖</span>
+                            <strong style="font-size: 0.92rem;">LLM & AI-Ready Markdown</strong>
+                        </div>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                            Converts your PDF into structured Markdown (<code style="background: var(--bg-subtle); padding: 2px 4px; border-radius: 4px;">.md</code>). Tables, headings, lists, and links are parsed cleanly for seamless consumption by Claude, GPT-4, Gemini, and Obsidian.
+                        </p>
+                    </div>
+                </div>
+            `;
+            break;
+
+        
+        case "crop":
+            html = `
+                <div class="form-group">
+                    <label class="form-label">CropBox Boundary Dimensions</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Crop Width (pt)</span>
+                            <input type="number" class="form-input" id="opt-crop-w" value="${state.options.crop_w || 500}" oninput="setOption('crop_w', this.value)">
+                        </div>
+                        <div>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Crop Height (pt)</span>
+                            <input type="number" class="form-input" id="opt-crop-h" value="${state.options.crop_h || 700}" oninput="setOption('crop_h', this.value)">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Offset Position</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 4px;">X Offset (Left)</span>
+                            <input type="number" class="form-input" id="opt-crop-x" value="${state.options.crop_x || 0}" oninput="setOption('crop_x', this.value)">
+                        </div>
+                        <div>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Y Offset (Bottom)</span>
+                            <input type="number" class="form-input" id="opt-crop-y" value="${state.options.crop_y || 0}" oninput="setOption('crop_y', this.value)">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.88rem; color: var(--text-primary); font-weight: 500;">
+                        <input type="checkbox" checked onchange="setOption('apply_all', this.checked ? '1' : '0')">
+                        <span>Apply CropBox to All Pages in Document</span>
+                    </label>
+                </div>
+            `;
+            break;
+
+        case "forms":
+            html = `
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--primary);">
+                            <span style="font-size: 1.2rem;">📋</span>
+                            <strong style="font-size: 0.92rem;">Interactive AcroForm Engine</strong>
+                        </div>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0 0 12px 0;">
+                            Fill interactive PDF form fields, inspect form values, and optionally flatten all fields into permanent non-editable text.
+                        </p>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.88rem; color: var(--text-primary); font-weight: 500;">
+                            <input type="checkbox" checked onchange="setOption('flatten', this.checked ? '1' : '0')">
+                            <span>Flatten Form Fields (Bake values into PDF)</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+            break;
+
+        case "redact":
+            html = `
+                <div class="form-group">
+                    <label class="form-label">Redaction Style</label>
+                    <select class="form-select" onchange="setOption('redact_style', this.value)">
+                        <option value="black" selected>Solid Blackout Box (Confidential)</option>
+                        <option value="white">Solid Whiteout Box (Clean Redact)</option>
+                    </select>
+                    <span class="form-hint" style="margin-top: 8px; display: block;">
+                        🛡️ Zero-Leak Sanitization: Redacted regions are burned into the document streams.
+                    </span>
+                </div>
+            `;
+            break;
+
+        case "compare":
+            html = `
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--primary);">
+                            <span style="font-size: 1.2rem;">🔍</span>
+                            <strong style="font-size: 0.92rem;">Side-by-Side Comparison</strong>
+                        </div>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                            Upload 2 PDF documents (Original vs Modified). The system compares page counts, file weights, metadata, and generates an audit report!
+                        </p>
+                    </div>
+                </div>
+            `;
+            break;
+
+        case "summarize":
+            html = `
+                <div class="form-group">
+                    <label class="form-label">Summary Depth</label>
+                    <select class="form-select" onchange="setOption('summarize_length', this.value)">
+                        <option value="short">Brief Executive Summary (1 Page TL;DR)</option>
+                        <option value="medium" selected>Standard Summary (Key Points & Takeaways)</option>
+                        <option value="long">Comprehensive Analysis (Full Synthesis)</option>
+                    </select>
+                </div>
+            `;
+            break;
+
+        case "translate":
+            html = `
+                <div class="form-group">
+                    <label class="form-label">Target Language</label>
+                    <select class="form-select" onchange="setOption('target_language', this.value)">
+                        <option value="Spanish" selected>Spanish (Español)</option>
+                        <option value="French">French (Français)</option>
+                        <option value="German">German (Deutsch)</option>
+                        <option value="Italian">Italian (Italiano)</option>
+                        <option value="Portuguese">Portuguese (Português)</option>
+                        <option value="Hindi">Hindi (हिन्दी)</option>
+                        <option value="Japanese">Japanese (日本語)</option>
+                        <option value="Chinese">Chinese (中文)</option>
+                        <option value="Arabic">Arabic (العربية)</option>
+                    </select>
+                </div>
+            `;
+            break;
+
+        case "wordpdf":
+        case "powerpointpdf":
+        case "excelpdf":
+            html = `
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <strong style="display: block; font-size: 0.92rem; color: var(--primary); margin-bottom: 6px;">Office to PDF Engine</strong>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                            Preserves fonts, vector tables, formulas, slide layouts, and formatting with 100% document fidelity.
+                        </p>
+                    </div>
+                </div>
+            `;
+            break;
+
+        case "pdfpowerpoint":
+        case "pdfexcel":
+            html = `
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <strong style="display: block; font-size: 0.92rem; color: var(--primary); margin-bottom: 6px;">PDF Extraction Engine</strong>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                            Reconstructs native editable slides and spreadsheet tables directly from your PDF document.
+                        </p>
+                    </div>
+                </div>
+            `;
+            break;
+
+        case "removepages":
+            html = `
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <strong style="display: block; font-size: 0.92rem; color: var(--primary); margin-bottom: 6px;">Interactive Page Remover</strong>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                            Click below to open the visual page canvas and remove unwanted pages with a single click.
+                        </p>
+                    </div>
+                </div>
+            `;
+            break;
+
+        case "extractpages":
+            html = `
+                <div class="form-group">
+                    <label class="form-label">Extract Mode</label>
+                    <select class="form-select" onchange="setOption('split_mode', this.value)">
+                        <option value="extract_pages" selected>Extract All Pages to Separate Files</option>
+                        <option value="ranges">Extract Custom Page Interval (e.g. 1-3)</option>
+                    </select>
+                </div>
+            `;
+            break;
+
+        case "editpdf":
+            html = `
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <strong style="display: block; font-size: 0.92rem; color: var(--primary); margin-bottom: 6px;">Visual Edit Studio</strong>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                            Launch the visual studio to draw signatures, add custom text blocks, insert dates, and place checkmark stamps anywhere on the page.
+                        </p>
+                    </div>
+                </div>
+            `;
+            break;
+
         default:
             html = `<p style="font-size: 0.88rem; color: var(--text-muted);">Standard cloud processing will be applied.</p>`;
     }
@@ -1044,8 +1569,12 @@ function setupEventListeners() {
         fileInput.addEventListener("change", (e) => {
             if (e.target.files && e.target.files.length > 0) {
                 handleFilesAdded(Array.from(e.target.files));
+                fileInput.value = "";
             }
         });
+
+        window.addEventListener("dragover", (e) => e.preventDefault());
+        window.addEventListener("drop", (e) => e.preventDefault());
 
         ["dragenter", "dragover"].forEach(eventName => {
             dropzone.addEventListener(eventName, (e) => {
@@ -1364,6 +1893,9 @@ function updateProcessButtonState() {
     let isValid = hasEnoughFiles;
     if (tool.id === "protect") {
         isValid = isValid && state.options.password && state.options.password.trim().length > 0;
+    } else if (tool.id === "htmlpdf") {
+        const hasUrl = state.options.url && state.options.url.trim().startsWith("http");
+        isValid = hasUrl || state.files.length >= 1;
     }
 
     btn.disabled = !isValid;
@@ -1374,13 +1906,24 @@ function updateProcessButtonState() {
 // -------------------------------------------------------------
 async function handleStartProcess() {
     const tool = state.selectedTool;
-    if (!tool || state.files.length < tool.minFiles) {
+    if (tool && tool.id === "htmlpdf") {
+        const hasUrl = state.options.url && state.options.url.trim().startsWith("http");
+        if (!hasUrl && state.files.length === 0) {
+            showToast("Please enter a valid webpage URL (starting with http:// or https://) or upload an HTML file.", "error");
+            return;
+        }
+    } else if (!tool || state.files.length < tool.minFiles) {
         showToast(`Please upload at least ${tool.minFiles} file(s).`, "error");
         return;
     }
 
     if (tool.id === "viewpdf") {
         await initPdfReaderFromFile(state.files[0]);
+        return;
+    }
+
+        if (tool.id === "editpdf") {
+        await initSignerStudio(state.files[0]);
         return;
     }
 
@@ -2743,6 +3286,18 @@ function printReaderDocument() {
         console.error("Print error:", err);
         window.open(state.reader.downloadUrl, "_blank");
     }
+}
+
+function closeSignerStudio() {
+    state.signer.pdfDoc = null;
+    state.signer.rawBytes = null;
+    state.signer.annotations = [];
+
+    const signerStudio = document.getElementById("signer-studio");
+    if (signerStudio) signerStudio.style.display = "none";
+
+    const wsLayout = document.querySelector(".workspace-layout");
+    if (wsLayout) wsLayout.style.display = "grid";
 }
 
 function closePdfReader() {

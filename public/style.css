@@ -1444,6 +1444,27 @@ body {
     box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
 }
 
+.signer-close-btn {
+    border: none;
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.signer-close-btn:hover {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
 .signer-viewport {
     display: flex;
     justify-content: center;
