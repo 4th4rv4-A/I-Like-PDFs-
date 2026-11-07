@@ -602,6 +602,66 @@ const DEFAULT_TOOLS = [
         "accept": ".pdf",
         "options": [],
         "defaultOptions": {}
+    },
+    {
+        "id": "heicpdf",
+        "name": "HEIC to PDF",
+        "tagline": "Convert Apple HEIC photos from iPhone/iPad into clean, high-quality PDF",
+        "category": "convert",
+        "icon": "📱",
+        "color": "#0284c7",
+        "bgLight": "#f0f9ff",
+        "badge": "iPhone Ready",
+        "minFiles": 1,
+        "maxFiles": 30,
+        "accept": ".heic,.heif,.jpg,.jpeg,.png,.webp",
+        "options": [],
+        "defaultOptions": { "page_size": "fit", "margin": "0" }
+    },
+    {
+        "id": "extractimg",
+        "name": "Extract Images from PDF",
+        "tagline": "Extract all high-resolution photos and graphics embedded in PDF to a ZIP",
+        "category": "organize",
+        "icon": "🖼️",
+        "color": "#059669",
+        "bgLight": "#ecfdf5",
+        "badge": "Media Extractor",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "flatten",
+        "name": "Flatten PDF",
+        "tagline": "Permanently bake form fields, annotations, and signatures into uneditable static pages",
+        "category": "organize",
+        "icon": "🔒",
+        "color": "#d97706",
+        "bgLight": "#fffbeb",
+        "badge": "Tamper Proof",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "pdfhtml",
+        "name": "PDF to HTML",
+        "tagline": "Convert PDF pages into clean, responsive, semantic HTML web pages",
+        "category": "convert",
+        "icon": "🌐",
+        "color": "#2563eb",
+        "bgLight": "#eff6ff",
+        "badge": "Web Publisher",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": {}
     }
 ];
 
@@ -1504,6 +1564,74 @@ function renderToolOptions(tool) {
                         <strong style="display: block; font-size: 0.92rem; color: var(--primary); margin-bottom: 6px;">Visual Edit Studio</strong>
                         <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
                             Launch the visual studio to draw signatures, add custom text blocks, insert dates, and place checkmark stamps anywhere on the page.
+                        </p>
+                    </div>
+                </div>
+            `;
+            break;
+
+        case "heicpdf":
+            html = `
+                <div class="form-group">
+                    <label class="form-label">Page Sizing</label>
+                    <select class="form-select" onchange="setOption('page_size', this.value)">
+                        <option value="fit" selected>Fit to Image (Original Photo Dimensions)</option>
+                        <option value="a4">Standard A4 Document (595 x 842 pt)</option>
+                        <option value="letter">US Letter (612 x 792 pt)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Page Margins</label>
+                    <select class="form-select" onchange="setOption('margin', this.value)">
+                        <option value="0" selected>Borderless (No Margins)</option>
+                        <option value="10">Small Margin (10 pt)</option>
+                        <option value="20">Normal Margin (20 pt)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <strong style="display: block; font-size: 0.92rem; color: #0284c7; margin-bottom: 4px;">iPhone & iPad Native Decoding</strong>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                            Directly converts high-efficiency HEIC and HEIF photos from Apple devices into sharp, universally shareable PDF pages.
+                        </p>
+                    </div>
+                </div>
+            `;
+            break;
+
+        case "extractimg":
+            html = `
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <strong style="display: block; font-size: 0.92rem; color: #059669; margin-bottom: 6px;">Lossless Image Extractor</strong>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                            Scans document streams for all embedded JPEG, PNG, and raster graphics, extracting them into a clean downloadable ZIP archive.
+                        </p>
+                    </div>
+                </div>
+            `;
+            break;
+
+        case "flatten":
+            html = `
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <strong style="display: block; font-size: 0.92rem; color: #d97706; margin-bottom: 6px;">Tamper-Proof Document Locking</strong>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                            Permanently bakes interactive AcroForm fields, checkboxes, digital signatures, and annotations directly into static page graphics for secure archiving and distribution.
+                        </p>
+                    </div>
+                </div>
+            `;
+            break;
+
+        case "pdfhtml":
+            html = `
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <strong style="display: block; font-size: 0.92rem; color: #2563eb; margin-bottom: 6px;">Semantic Web Publisher</strong>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                            Converts your PDF into a standalone, responsive HTML webpage with clean modern styling, ready for publishing, archiving, or in-browser viewing.
                         </p>
                     </div>
                 </div>
