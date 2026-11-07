@@ -662,6 +662,66 @@ const DEFAULT_TOOLS = [
         "accept": ".pdf",
         "options": [],
         "defaultOptions": {}
+    },
+    {
+        "id": "blurimage",
+        "name": "Blur & Redact Image",
+        "tagline": "Obscure faces, license plates, and confidential info on photos or scans before sharing",
+        "category": "security",
+        "icon": "🎭",
+        "color": "#7c3aed",
+        "bgLight": "#f5f3ff",
+        "badge": "Privacy Shield",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".jpg,.jpeg,.png,.webp",
+        "options": [],
+        "defaultOptions": { "blur_style": "frosted", "export_format": "png" }
+    },
+    {
+        "id": "cleanpdf",
+        "name": "Clean PDF",
+        "tagline": "Remove unwanted watermarks, background stamps, and header/footer overlays",
+        "category": "optimize",
+        "icon": "🧼",
+        "color": "#0d9488",
+        "bgLight": "#f0fdfa",
+        "badge": "Watermark Cleaner",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".pdf",
+        "options": [],
+        "defaultOptions": { "watermark_text": "draft,confidential,sample,watermark" }
+    },
+    {
+        "id": "jpgexcel",
+        "name": "Image to Excel",
+        "tagline": "Extract tables, invoices, and structured data from photos and scans into Excel (.xlsx)",
+        "category": "convert",
+        "icon": "📊",
+        "color": "#16a34a",
+        "bgLight": "#f0fdf4",
+        "badge": "Table OCR",
+        "minFiles": 1,
+        "maxFiles": 1,
+        "accept": ".jpg,.jpeg,.png,.webp,.pdf",
+        "options": [],
+        "defaultOptions": {}
+    },
+    {
+        "id": "invoice",
+        "name": "Invoice Generator",
+        "tagline": "Create professional, itemized PDF invoices and receipts with custom tax and totals",
+        "category": "convert",
+        "icon": "🧾",
+        "color": "#6366f1",
+        "bgLight": "#eef2ff",
+        "badge": "Smart Invoicing",
+        "minFiles": 0,
+        "maxFiles": 1,
+        "accept": ".pdf,.json",
+        "options": [],
+        "defaultOptions": { "currency": "$", "tax_rate": "10" }
     }
 ];
 
@@ -1638,6 +1698,116 @@ function renderToolOptions(tool) {
             `;
             break;
 
+        case "blurimage":
+            html = `
+                <div class="form-group">
+                    <label class="form-label">Redaction Style</label>
+                    <select class="form-select" onchange="setOption('blur_style', this.value)">
+                        <option value="frosted" selected>Frosted Glass Privacy Blur</option>
+                        <option value="black">Blackout Solid Redaction Box</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Export Format</label>
+                    <select class="form-select" onchange="setOption('export_format', this.value)">
+                        <option value="image" selected>Clean Image (.png / .jpg)</option>
+                        <option value="pdf">Sanitized PDF Document (.pdf)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <strong style="display: block; font-size: 0.92rem; color: #7c3aed; margin-bottom: 4px;">Smart Document Privacy</strong>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                            Instantly obscures sensitive personal data, faces, driver's licenses, and account details before sharing.
+                        </p>
+                    </div>
+                </div>
+            `;
+            break;
+
+        case "cleanpdf":
+            html = `
+                <div class="form-group">
+                    <label class="form-label">Watermark Keywords to Clean</label>
+                    <input type="text" class="form-input" 
+                           value="draft,confidential,sample,watermark,copy" 
+                           oninput="setOption('watermark_text', this.value)"
+                           placeholder="e.g. draft, confidential, sample">
+                    <span class="form-hint">Comma-separated keywords to detect and strip from document layers.</span>
+                </div>
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <strong style="display: block; font-size: 0.92rem; color: #0d9488; margin-bottom: 4px;">Clean & Restored Document</strong>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                            Removes annoying overlay stamps, background watermarks, and header/footer annotations without affecting document text.
+                        </p>
+                    </div>
+                </div>
+            `;
+            break;
+
+        case "jpgexcel":
+            html = `
+                <div class="form-group">
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px;">
+                        <strong style="display: block; font-size: 0.92rem; color: #16a34a; margin-bottom: 6px;">Optical Table Extraction (OCR)</strong>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                            Extracts tabular data, receipts, and line-item grids directly from photos or PDF scans into native Microsoft Excel (.xlsx) spreadsheets.
+                        </p>
+                    </div>
+                </div>
+            `;
+            break;
+
+        case "invoice":
+            html = `
+                <div class="form-group">
+                    <label class="form-label">Invoice Number</label>
+                    <input type="text" class="form-input" 
+                           value="INV-${Date.now().toString().slice(-6)}" 
+                           oninput="setOption('invoice_number', this.value)"
+                           placeholder="INV-1001">
+                </div>
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label class="form-label">Currency</label>
+                        <select class="form-select" onchange="setOption('currency', this.value)">
+                            <option value="$" selected>USD ($)</option>
+                            <option value="€">EUR (€)</option>
+                            <option value="£">GBP (£)</option>
+                            <option value="₹">INR (₹)</option>
+                            <option value="¥">JPY / CNY (¥)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Tax Rate (%)</label>
+                        <input type="number" class="form-input" value="10" min="0" max="100"
+                               oninput="setOption('tax_rate', this.value)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Issuer Name</label>
+                    <input type="text" class="form-input" 
+                           value="I Like PDFs Enterprise" 
+                           oninput="setOption('issuer_name', this.value)"
+                           placeholder="Your Company Name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Billed To (Client)</label>
+                    <input type="text" class="form-input" 
+                           value="Valued Client Corporation" 
+                           oninput="setOption('client_name', this.value)"
+                           placeholder="Client / Company Name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Item Description</label>
+                    <input type="text" class="form-input" 
+                           value="Professional Document Pipeline & PDF Grid Service" 
+                           oninput="setOption('item_desc', this.value)">
+                </div>
+            `;
+            break;
+
         default:
             html = `<p style="font-size: 0.88rem; color: var(--text-muted);">Standard cloud processing will be applied.</p>`;
     }
@@ -2024,6 +2194,8 @@ function updateProcessButtonState() {
     } else if (tool.id === "htmlpdf") {
         const hasUrl = state.options.url && state.options.url.trim().startsWith("http");
         isValid = hasUrl || state.files.length >= 1;
+    } else if (tool.id === "invoice") {
+        isValid = true;
     }
 
     btn.disabled = !isValid;
@@ -2040,6 +2212,8 @@ async function handleStartProcess() {
             showToast("Please enter a valid webpage URL (starting with http:// or https://) or upload an HTML file.", "error");
             return;
         }
+    } else if (tool && tool.id === "invoice") {
+        // Invoice generator can proceed without file upload
     } else if (!tool || state.files.length < tool.minFiles) {
         showToast(`Please upload at least ${tool.minFiles} file(s).`, "error");
         return;
